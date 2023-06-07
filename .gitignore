@@ -21,4 +21,4 @@ Cargo.lock
 /target
 
 result.png
-test.ppm
+output.ppm
