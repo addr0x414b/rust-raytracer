@@ -56,8 +56,24 @@ impl Vec3 {
         );
     }
 
-    pub fn unit_vector(&self) -> Vec3 {
-        return self.divide_by(self.length());
+    pub fn clone(&self) -> Vec3 {
+        return Vec3::new(self.x, self.y, self.z);
+    }
+}
+
+
+pub struct Ray {
+    pub origin: Vec3,
+    pub direction: Vec3
+}
+
+impl Ray {
+    pub fn new(origin: Vec3, direction: Vec3) -> Self {
+        Self { origin, direction }
+    }
+
+    pub fn at(&self, t: f64) -> Vec3 {
+        return self.origin.add(&self.direction.multiply_by(t));
     }
 }
 
@@ -68,11 +84,31 @@ fn write_color(f: &mut File, color: Vec3) {
     f.write_all(format!("{} {} {}\n", ir, ig, ib).as_bytes()).expect("Unable to write to file");
 }
 
+fn unit_vector(v: Vec3) -> Vec3 {
+    return v.divide_by(v.length());
+}
+
+fn ray_color(r: Ray) -> Vec3 {
+    let unit_direction: Vec3 = unit_vector(r.direction);
+    let t: f64 = 0.5 * (unit_direction.y + 1.0);
+    return Vec3::new(1.0, 1.0, 1.0).multiply_by(1.0 - t).add(&Vec3::new(0.5, 0.7, 1.0).multiply_by(t));
+}
+
 fn main() {
 
-    // Initialize image width and height
-    const IMAGE_WIDTH: u32 = 256;
-    const IMAGE_HEIGHT: u32 = 256;
+    // Initialize image properties
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    const IMAGE_WIDTH: u32 = 1200;
+    const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
+
+    // Initialize camera properties
+    let viewport_height: f64 = 2.0;
+    let viewport_width: f64 = ASPECT_RATIO * viewport_height;
+    let focal_length: f64 = 1.0;
+    let origin = Vec3::new(0.0, 0.0, 0.0);
+    let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
+    let vertical = Vec3::new(0.0, viewport_height, 0.0);
+    let lower_left_corner = origin.subtract(&horizontal.divide_by(2.0)).subtract(&vertical.divide_by(2.0)).subtract(&Vec3::new(0.0, 0.0, focal_length));
 
     // Create the file to render to
     let mut f = File::create("test.ppm").expect("Unable to create file");
@@ -81,12 +117,15 @@ fn main() {
     f.write_all((format!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT)).as_bytes()).expect("Unable to write to file");
 
     // Loop through the image width and height
-    for j in 0..=IMAGE_HEIGHT-1 {
-        print!("Scanlines remaining: {}\n", IMAGE_HEIGHT - j); // Calculate remaining lines to render
+    for j in (0..=IMAGE_HEIGHT-1).rev() {
+        print!("Scanlines remaining: {}\n", j); // Calculate remaining lines to render
         for i in 0..=IMAGE_WIDTH-1 {
 
+            let u = (i as f64) / ((IMAGE_WIDTH - 1) as f64);
+            let v = (j as f64) / ((IMAGE_HEIGHT - 1) as f64);
+            let r = Ray::new(origin.clone(), lower_left_corner.add(&horizontal.multiply_by(u)).add(&vertical.multiply_by(v)).subtract(&origin));
             // Right now, just render a gradient
-            let pixel_color: Vec3 = Vec3::new((i as f64) / (IMAGE_WIDTH - 1) as f64, (j as f64) / (IMAGE_HEIGHT - 1) as f64, 0.25);
+            let pixel_color = ray_color(r);
             write_color(&mut f, pixel_color);
         }
     }
