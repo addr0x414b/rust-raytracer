@@ -1,6 +1,9 @@
 use std::fs::File;
 use std::io::Write;
 
+mod vec3;
+use vec3::Vec3;
+
 fn main() {
 
     // Initialize image properties
@@ -31,5 +34,4 @@ fn main() {
         }
     }
     println!("Done!");
-
 }
