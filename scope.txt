@@ -7,3 +7,8 @@ Features:
 [_] - Import custom models
 [_] - Custom textures for custom models (at least diffuse, extra points for normals and others)
 [_] - Add, edit, and move around light sources
+
+Important Commands:
+
+- To generate a png from a ppm file:
+ffmpeg -i image.ppm out.png
