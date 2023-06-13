@@ -2,6 +2,8 @@ use std::fs::File;
 use std::io::Write;
 
 mod vec3;
+use vec3::Point3;
+use vec3::Color;
 use vec3::Vec3;
 
 fn main() {
