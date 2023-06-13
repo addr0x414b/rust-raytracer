@@ -5,6 +5,8 @@ mod vec3;
 mod color;
 mod ray;
 
+use vec3::dot;
+
 use crate::vec3::unit_vector;
 use crate::vec3::Vec3;
 use crate::vec3::Point3;
@@ -12,9 +14,21 @@ use crate::ray::Ray;
 use crate::vec3::Color;
 use crate::color::write_color;
 
+fn hit_sphere(center: Point3, radius: f32, r: Ray) -> bool {
+    let oc: Vec3 = r.origin() - center;
+    let a: f32 = dot(r.direction(), r.direction());
+    let b: f32 = 2.0 * dot(oc, r.direction());
+    let c: f32 = dot(oc, oc) - radius*radius;
+    let discriminant: f32 = b*b - a*c*4.0;
+    return discriminant > 0.0;
+}
+
 // Calculate the gradient background based on the ray 
 fn ray_color(r: Ray) -> Color {
-    // Normalize the direction
+    if hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, r) {
+        return Color::new(1.0, 0.0, 0.0);
+    }
+    // Normalize the direction such that we are in between -1 and 1
     let unit_direction: Vec3 = unit_vector(r.direction());
     // Calculate the intensity for the Y of the direction. It's -1 to 1 and we need 0 to 1
     let t: f32 = (unit_direction.y() + 1.0) * 0.5;
