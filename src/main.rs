@@ -3,7 +3,11 @@ use std::io::Write;
 
 mod vec3;
 mod color;
+mod ray;
 
+use crate::vec3::Vec3;
+use crate::vec3::Point3;
+use crate::ray::Ray;
 use crate::vec3::Color;
 use crate::color::write_color;
 
