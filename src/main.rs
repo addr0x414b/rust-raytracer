@@ -2,9 +2,11 @@ use std::fs::File;
 use std::io::Write;
 
 mod vec3;
-use vec3::Point3;
-use vec3::Color;
-use vec3::Vec3;
+mod color;
+
+use crate::vec3::Color;
+use crate::color::write_color;
+
 
 fn main() {
 
@@ -26,13 +28,8 @@ fn main() {
             let g: f32 = 1.0 - (y as f32 / (IMAGE_HEIGHT - 1) as f32);
             let b: f32 = 0.25;
 
-            // Convert previous values from 0 to 1, to 0 to 255
-            let ir: u16 = (255.0 * r) as u16;
-            let ig: u16 = (255.0 * g) as u16;
-            let ib: u16 = (255.0 * b) as u16;
-
-            // Write to file
-            output_file.write(format!("{} {} {}\n", ir, ig, ib).as_bytes()).expect("Unable to write color pixel to file");
+            let pixel_color: Color = Color::new(r, g, b);
+            write_color(&mut output_file, pixel_color);
         }
     }
     println!("Done!");
