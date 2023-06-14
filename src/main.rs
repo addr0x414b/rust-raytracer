@@ -14,19 +14,35 @@ use crate::ray::Ray;
 use crate::vec3::Color;
 use crate::color::write_color;
 
-fn hit_sphere(center: Point3, radius: f32, r: Ray) -> bool {
+// Check if we hit a sphere based on its center point and radius
+fn hit_sphere(center: Point3, radius: f32, r: Ray) -> f32 {
+    // Equation to calculate if a ray hit a sphere
     let oc: Vec3 = r.origin() - center;
-    let a: f32 = dot(r.direction(), r.direction());
-    let b: f32 = 2.0 * dot(oc, r.direction());
-    let c: f32 = dot(oc, oc) - radius*radius;
-    let discriminant: f32 = b*b - a*c*4.0;
-    return discriminant > 0.0;
+    let a: f32 = r.direction().length_squared();
+    let half_b: f32 = dot(oc, r.direction());
+    let c: f32 = oc.length_squared() - radius*radius;
+    let discriminant: f32 = half_b*half_b - a*c;
+    
+    // If we're less than 0, we didn't hit the sphere
+    if discriminant < 0.0 {
+        return -1.0;
+    } else {
+        return (-half_b - discriminant.sqrt()) / a;
+    }
 }
 
-// Calculate the gradient background based on the ray 
+// Either draw the background or if we hit a sphere, draw the sphere
 fn ray_color(r: Ray) -> Color {
-    if hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, r) {
-        return Color::new(1.0, 0.0, 0.0);
+    let t: f32 = hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, r);
+    // If we hit the sphere, draw its color based on normal
+    if t > 0.0 {
+        // A normal is perpendicular from the hit point and center of sphere.
+        // r.at(t) gives us the hit point, and we subtract the center of the sphere
+        // in order to calculate the direction of the normal that is perpendicular
+        // to the hit point. Then just use those values to get a color.
+        let n: Vec3 = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
+        // Multiply by 0.5 to bring the values down so they are <= 255
+        return Color::new(1.0+n.x(), 1.0+n.y(), 1.0+n.z())*0.5;
     }
     // Normalize the direction such that we are in between -1 and 1
     let unit_direction: Vec3 = unit_vector(r.direction());
@@ -69,10 +85,14 @@ fn main() {
         println!("Scanlines remaining: {}", IMAGE_HEIGHT - y);
         for x in 0..IMAGE_WIDTH {
 
+            // Internal position of our image
             let u = x as f32 / (IMAGE_WIDTH) as f32;
             let v = 1.0 - (y as f32 / (IMAGE_HEIGHT) as f32);
 
+            // Create a ray. We store the origin, and then we also calculate the direction we are pointing at based on the pixel value of our image
             let r = Ray::new(origin, lower_left_corner + horizontal*u + vertical*v - origin);
+
+            // Grab the color value of the ray and draw it
             let pixel_color = ray_color(r);
             write_color(&mut output_file, pixel_color);
         }
