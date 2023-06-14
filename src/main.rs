@@ -1,18 +1,29 @@
+use std::f32::INFINITY;
 use std::fs::File;
 use std::io::Write;
+use std::rc::Rc;
 
 mod vec3;
 mod color;
 mod ray;
+mod hittable;
+mod sphere;
+mod hittableList;
+mod rtweekend;
 
+use hittable::HitRecord;
+use hittable::Hittable;
 use vec3::dot;
 
+use crate::hittableList::HittableList;
+use crate::sphere::Sphere;
 use crate::vec3::unit_vector;
 use crate::vec3::Vec3;
 use crate::vec3::Point3;
 use crate::ray::Ray;
 use crate::vec3::Color;
 use crate::color::write_color;
+
 
 // Check if we hit a sphere based on its center point and radius
 fn hit_sphere(center: Point3, radius: f32, r: Ray) -> f32 {
@@ -32,7 +43,18 @@ fn hit_sphere(center: Point3, radius: f32, r: Ray) -> f32 {
 }
 
 // Either draw the background or if we hit a sphere, draw the sphere
-fn ray_color(r: Ray) -> Color {
+fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
+    let mut rec: HitRecord = HitRecord::default();
+    if (world.hit(r, 0.0, INFINITY, &mut rec)) {
+        return (rec.normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
+    }
+    let unit_direction = unit_vector(r.direction());
+    let t = (unit_direction.y() + 1.0) * 0.5;
+    return Color::new(1.0, 1.0, 1.0) * (1.0 - t) + Color::new(0.5, 0.7, 1.0) * t;
+}
+
+// Either draw the background or if we hit a sphere, draw the sphere
+/*fn ray_color(r: Ray) -> Color {
     let t: f32 = hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, r);
     // If we hit the sphere, draw its color based on normal
     if t > 0.0 {
@@ -50,7 +72,7 @@ fn ray_color(r: Ray) -> Color {
     let t: f32 = (unit_direction.y() + 1.0) * 0.5;
     // Calculate the color based on the vertical position of the ray
     return Color::new(1.0, 1.0, 1.0) * (1.0 - t) + Color::new(0.5, 0.7, 1.0) * t;
-}
+}*/
 
 fn main() {
 
@@ -58,6 +80,11 @@ fn main() {
     const ASPECT_RATIO: f32 = 16.0 / 9.0;
     const IMAGE_WIDTH: u16 = 400;
     const IMAGE_HEIGHT: u16 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as u16;
+
+    // World
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
 
     // Initialize camera
     // Arbitrary height. Camera will go from -1 to 1
@@ -93,7 +120,7 @@ fn main() {
             let r = Ray::new(origin, lower_left_corner + horizontal*u + vertical*v - origin);
 
             // Grab the color value of the ray and draw it
-            let pixel_color = ray_color(r);
+            let pixel_color = ray_color(&r, &world);
             write_color(&mut output_file, pixel_color);
         }
     }
