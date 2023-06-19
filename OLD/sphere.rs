@@ -21,7 +21,7 @@ impl Hittable for Sphere {
         let c: f32 = oc.length_squared() - self.radius*self.radius;
 
         let discriminant: f32 = half_b*half_b - a*c;
-        if (discriminant < 0.0) {
+        if discriminant < 0.0 {
             return false;
         }
         let sqrtd: f32 = discriminant.sqrt();
