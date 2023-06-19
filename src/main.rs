@@ -20,8 +20,12 @@ fn write_color(file: &mut File, color: Color) {
         .expect("Unable to write to file");
 }
 
+/// Calculate color based on the ray sent from the origin
+/// # Arguments
+/// 'r' - Ray type, contains the origin and its direction
 fn ray_color(r: Ray) -> Color {
-    return Color::new(1.0, 1.0, 1.0);
+    let t = (r.direction().y() + 1.0) * 0.5;
+    return (Color::new(1.0, 1.0, 1.0) * (1.0 - t)) + Color::new(0.5, 0.7, 1.0)*t;
 }
 
 fn main() {
@@ -39,7 +43,6 @@ fn main() {
     /// # Description
     /// Stores the height of our final image in pixels.
     const IMAGE_HEIGHT: u16 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as u16;
-    println!("{}", IMAGE_HEIGHT);
 
     // Camera properties
     let viewport_height: f32 = 2.0;
@@ -50,7 +53,6 @@ fn main() {
     let horizontal: Vec3 = Vec3::new(viewport_width, 0.0, 0.0);
     let vertical: Vec3 = Vec3::new(0.0, viewport_height, 0.0);
     let lower_left_corner: Vec3 = origin - (horizontal/2.0) - (vertical/2.0) - Vec3::new(0.0, 0.0, focal_length);
-    
 
     // Create a PPM file which will store our raytraced image
     let mut output_file: File = File::create("output.ppm")
@@ -69,8 +71,8 @@ fn main() {
             // Color each pixel light blue
             //let color: Color = Color::new(0.56, 0.64, 0.96);
 
-            let u: f32 = (x / (IMAGE_WIDTH - 1)) as f32;
-            let v: f32 = (y / (IMAGE_HEIGHT - 1)) as f32;
+            let u: f32 = x as f32 / (IMAGE_WIDTH - 1) as f32;
+            let v: f32 = 1.0 - (y as f32 / (IMAGE_HEIGHT - 1) as f32);
 
             let r = Ray::new(origin, lower_left_corner + (horizontal*u) + (vertical*v) - origin);
             let color = ray_color(r);
