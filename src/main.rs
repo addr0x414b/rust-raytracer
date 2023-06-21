@@ -1,9 +1,13 @@
 use std::{fs::File, io::Write}; // Used to create/write to PPM file
 
 mod vec3;
-use crate::{vec3::{Vec3, Color, Point3}, ray::Ray};
+use vec3::{cross, unit_vector};
+
+use crate::{vec3::{Vec3, Color, Point3, dot}, ray::Ray};
 
 mod ray;
+mod triangle;
+use crate::triangle::Triangle;
 
 /// Write a color in PPM format to a PPM file
 /// # Arguments
@@ -20,10 +24,60 @@ fn write_color(file: &mut File, color: Color) {
         .expect("Unable to write to file");
 }
 
-/// Calculate color based on the ray sent from the origin
+/// Check if a triangle has been hit by the ray.
+/// This code was provided by Wikipedia - 
+/// 'Möller–Trumbore intersection algorithm' and translated
+/// from C++ to  Rust.
+/// # Arguments
+/// * 't' - Triangle to check if ray has hit.
+/// * 'r' - Ray from the camera.
+fn hit_triangle(t: Triangle, r: Ray) -> bool {
+    let edge1 = t[1] - t[0];
+    let edge2 = t[2] - t[0];
+    let h = cross(r.direction(), edge2);
+    let a = dot(edge1, h);
+    const EPSILON: f32 = 0.0000001;
+    if a > -EPSILON && a < EPSILON {
+        return false;
+    }
+
+    let f = 1.0 / a;
+    let s = r.origin() - t[0];
+    let u = f * dot(s, h);
+    if u < 0.0 || u > 1.0 {
+        return false;
+    }
+
+    let q = cross(s, edge1);
+    let v = f * dot(r.direction(), q);
+    if v < 0.0 || u + v > 1.0 {
+        return false;
+    }
+
+    let t = f * dot(edge2, q);
+    if t > EPSILON {
+        let intersection = r.at(t);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+/// Calculate color based on the ray sent from the origin and returns the color.
+/// Currently linearly interpolating from pure white to light blue.
 /// # Arguments
 /// 'r' - Ray type, contains the origin and its direction
 fn ray_color(r: Ray) -> Color {
+    // Test triangle
+    let trig: Triangle = Triangle::new(
+        Point3::new(-1.0, -0.5, -1.0),
+        Point3::new(1.0, -0.5, -1.0),
+        Point3::new(0.0, 0.5, -1.0),
+        Vec3::new(0.0, 0.0, 1.0));
+    if hit_triangle(trig, r) {
+        return Color::new(1.0, 0.0, 0.0);
+    }
     let t = (r.direction().y() + 1.0) * 0.5;
     return (Color::new(1.0, 1.0, 1.0) * (1.0 - t)) + Color::new(0.5, 0.7, 1.0)*t;
 }

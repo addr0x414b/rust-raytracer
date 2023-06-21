@@ -1,4 +1,4 @@
-use std::ops::{Mul, Add, Div, Sub, Neg};
+use std::ops::{Mul, Add, Div, Sub, Neg, Index};
 
 /// A struct that stores an array of three f32's. This struct is used for 
 /// vector 3's, points in 3d space, as well as RGB color values.
@@ -28,9 +28,29 @@ impl Vec3 {
         return self.v[2];
     }
 
+    /// Return the length of a vector.
+    pub fn length(self) -> f32 {
+        return self.length_squared().sqrt();
+    }
+
+    /// Add the squared of every component in vector.
+    pub fn length_squared(self) -> f32 {
+        return (self.x()*self.x()) + (self.y()*self.y()) + (self.z()*self.z());
+    }
+
     /// Debugging function to print the vector values to console.
     pub fn print(self) {
         println!("{}, {}, {}", self.x(), self.y(), self.z());
+    }
+}
+
+
+/// Get the component of the vector based on the index. Iterate like an array.
+impl Index<usize> for Vec3 {
+    type Output = f32;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        return &self.v[index];
     }
 }
 
@@ -70,6 +90,15 @@ impl Mul<f32> for Vec3 {
     }
 }
 
+/// Multiply two vectors and return result.
+impl Mul<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, v: Vec3) -> Vec3 {
+        return Vec3::new(self.v[0] * v[0], self.v[1] * v[1], self.v[2] * v[2]);
+    }
+}
+
 // Divide a Vec3 structs x,y,z values by a f32 float.
 impl Div<f32> for Vec3 {
     type Output = Vec3;
@@ -77,6 +106,25 @@ impl Div<f32> for Vec3 {
     fn div(self, t: f32) -> Vec3 {
         return self * (1.0 / t);
     }
+}
+
+/// Calculate the unit vector.
+pub fn unit_vector(v: Vec3) -> Vec3 {
+    return v / v.length();
+}
+
+/// Calculate the dot product of two vectors.
+pub fn dot(a: Vec3, b: Vec3) -> f32 {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+/// Calculate the cross product of two vectors.
+pub fn cross(a: Vec3, b: Vec3) -> Vec3 {
+    return Vec3::new(
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0]
+    );
 }
 
 pub type Color = Vec3;
