@@ -27,40 +27,39 @@ fn write_color(file: &mut File, color: Color) {
 /// Check if a triangle has been hit by the ray.
 /// This code was provided by Wikipedia - 
 /// 'Möller–Trumbore intersection algorithm' and translated
-/// from C++ to  Rust.
+/// from C++ to  Rust by me.
 /// # Arguments
 /// * 't' - Triangle to check if ray has hit.
 /// * 'r' - Ray from the camera.
-fn hit_triangle(t: Triangle, r: Ray) -> bool {
+fn hit_triangle(t: Triangle, r: Ray) -> f32{
     let edge1 = t[1] - t[0];
     let edge2 = t[2] - t[0];
     let h = cross(r.direction(), edge2);
     let a = dot(edge1, h);
     const EPSILON: f32 = 0.0000001;
     if a > -EPSILON && a < EPSILON {
-        return false;
+        return -1.0;
     }
 
     let f = 1.0 / a;
     let s = r.origin() - t[0];
     let u = f * dot(s, h);
     if u < 0.0 || u > 1.0 {
-        return false;
+        return -1.0;
     }
 
     let q = cross(s, edge1);
     let v = f * dot(r.direction(), q);
     if v < 0.0 || u + v > 1.0 {
-        return false;
+        return -1.0;
     }
 
     let t = f * dot(edge2, q);
     if t > EPSILON {
-        let intersection = r.at(t);
-        return true;
+        return t;
     }
     else {
-        return false;
+        return -1.0;
     }
 }
 
@@ -75,10 +74,14 @@ fn ray_color(r: Ray) -> Color {
         Point3::new(1.0, -0.5, -1.0),
         Point3::new(0.0, 0.5, -1.0),
         Vec3::new(0.0, 0.0, 1.0));
-    if hit_triangle(trig, r) {
-        return Color::new(1.0, 0.0, 0.0);
+    let mut t = hit_triangle(trig, r);
+    if t > 0.0 {
+        //let n = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
+        let n = unit_vector(trig.normal());
+        return Color::new(n.x()+1.0, n.y()+1.0, n.z()+1.0)*0.5;
     }
-    let t = (r.direction().y() + 1.0) * 0.5;
+    let n = unit_vector(r.direction());
+    t = (n.y() + 1.0) * 0.5;
     return (Color::new(1.0, 1.0, 1.0) * (1.0 - t)) + Color::new(0.5, 0.7, 1.0)*t;
 }
 
