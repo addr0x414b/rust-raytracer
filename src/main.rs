@@ -3,7 +3,7 @@ use std::{fs::File, io::Write}; // Used to create/write to PPM file
 mod vec3;
 use vec3::{cross, unit_vector};
 
-use crate::{vec3::{Vec3, Color, Point3, dot}, ray::Ray};
+use crate::{vec3::{Vec3, Color, Point3, dot}, ray::Ray, mesh::Mesh, world::World};
 
 mod ray;
 mod triangle;
@@ -70,18 +70,22 @@ fn hit_triangle(t: Triangle, r: Ray) -> f32{
 /// Currently linearly interpolating from pure white to light blue.
 /// # Arguments
 /// 'r' - Ray type, contains the origin and its direction
-fn ray_color(r: Ray) -> Color {
+fn ray_color(r: Ray, w: &World) -> Color {
     // Test triangle
-    let trig: Triangle = Triangle::new(
-        Point3::new(-1.0, -0.5, -1.0),
-        Point3::new(1.0, -0.5, -1.0),
-        Point3::new(0.0, 0.5, -1.0),
-        Vec3::new(0.0, 0.0, 1.0));
-    let mut t = hit_triangle(trig, r);
+    //let trig: Triangle = Triangle::new(
+    //    Point3::new(-1.0, -0.5, -1.0),
+    //    Point3::new(1.0, -0.5, -1.0),
+    //    Point3::new(0.0, 0.5, -1.0),
+    //    Vec3::new(0.0, 0.0, 1.0));
+    //let mut t = hit_triangle(trig, r);
+    let mut trig: Triangle = Triangle::new_empty();
+    let mut t = w.hit(r, &mut trig);
     if t > 0.0 {
         //let n = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
+
         let n = unit_vector(trig.normal());
         return Color::new(n.x()+1.0, n.y()+1.0, n.z()+1.0)*0.5;
+        //return Color::new(1.0, 1.0, 1.0);
     }
     let n = unit_vector(r.direction());
     t = (n.y() + 1.0) * 0.5;
@@ -125,6 +129,39 @@ fn main() {
     output_file.write(format!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT).as_bytes())
         .expect("Unable to initiate output.ppm properties");
 
+
+    // Create a simple plane
+    let trig1: Triangle = Triangle::new(
+        Point3::new(0.5, -0.5, -1.0),
+        Point3::new(0.5, 0.5, -1.0),
+        Point3::new(-0.5, 0.5, -1.0),
+        Vec3::new(0.0, 0.0, 1.0));
+    let trig2: Triangle = Triangle::new(
+        Point3::new(-0.5, -0.5, -1.0),
+        Point3::new(0.5, -0.5, -1.0),
+        Point3::new(-0.5, 0.5, -1.0),
+        Vec3::new(0.0, 0.0, 1.0));
+
+    let cube: Mesh = Mesh::new_mesh(vec![trig1, trig2]);
+
+    let trig3: Triangle = Triangle::new(
+        Point3::new(1000.0, -50.0, 500.0),
+        Point3::new(1000.0, -50.0, -500.0),
+        Point3::new(-1000.0, -50.0, 500.0),
+        Vec3::new(0.0, 1.0, 0.0));
+    let trig4: Triangle = Triangle::new(
+        Point3::new(-1000.0, -50.0, -500.0),
+        Point3::new(1000.0, -50.0, -500.0),
+        Point3::new(-1000.0, -50.0, 500.0),
+        Vec3::new(0.0, 1.0, 0.0));
+
+    let floor: Mesh = Mesh::new_mesh(vec![trig3, trig4]);
+
+    let mut world: World = World::new();
+
+    world.add(floor);
+    world.add(cube);
+
     // Loop over every single pixel in our image
     for y in 0..IMAGE_HEIGHT {
         for x in 0..IMAGE_WIDTH {
@@ -135,7 +172,7 @@ fn main() {
             let v: f32 = 1.0 - (y as f32 / (IMAGE_HEIGHT - 1) as f32);
 
             let r = Ray::new(origin, lower_left_corner + (horizontal*u) + (vertical*v) - origin);
-            let color = ray_color(r);
+            let color = ray_color(r, &world);
 
             // Write our r,g,b values to every single pixel
             write_color(&mut output_file, color);
