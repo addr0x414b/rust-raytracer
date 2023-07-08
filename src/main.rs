@@ -9,6 +9,8 @@ mod ray;
 mod triangle;
 use crate::triangle::Triangle;
 
+mod mesh;
+
 /// Write a color in PPM format to a PPM file
 /// # Arguments
 /// * 'file' - Output PPM file, should already be initialized.
