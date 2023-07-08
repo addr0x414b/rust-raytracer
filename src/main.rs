@@ -10,6 +10,7 @@ mod triangle;
 use crate::triangle::Triangle;
 
 mod mesh;
+mod world;
 
 /// Write a color in PPM format to a PPM file
 /// # Arguments
