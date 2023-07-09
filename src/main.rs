@@ -1,4 +1,5 @@
 use std::{fs::File, io::Write}; // Used to create/write to PPM file
+use rand::Rng;
 
 mod vec3;
 use hit::Hit;
@@ -14,7 +15,25 @@ mod mesh;
 mod world;
 mod hit;
 
-/// Write a color in PPM format to a PPM file
+/// Write a color in PPM format to a PPM file using antialiasing.
+/// # Arguments
+/// * 'file' - Output PPM file, should already be initialized.
+/// * 'color' - Color struct which contains x,y,z (rgb). 0 <= R,G,B <= 1.
+fn write_color_aa(file: &mut File, color: Color, sample: u16) {
+    let r: u16 = ((color.x() * (1.0 / sample as f32)).clamp(0.0, 0.999) * 255.0) as u16;
+    let g: u16 = ((color.y() * (1.0 / sample as f32)).clamp(0.0, 0.999) * 255.0) as u16;
+    let b: u16 = ((color.z() * (1.0 / sample as f32)).clamp(0.0, 0.999) * 255.0) as u16;
+    //let r: u16 = (color.x() * 255.0) as u16;
+    //let g: u16 = (color.y() * 255.0) as u16;
+    //let b: u16 = (color.z() * 255.0) as u16;
+    if r > 255 || g > 255 || b > 255 {
+        panic!("write_color: R,G,B values are larger than 255");
+    }
+    file.write(format!("{} {} {}\n", r, g, b).as_bytes())
+        .expect("Unable to write to file");
+}
+
+/// Write a color in PPM format to a PPM file with no antialiasing.
 /// # Arguments
 /// * 'file' - Output PPM file, should already be initialized.
 /// * 'color' - Color struct which contains x,y,z (rgb). 0 <= R,G,B <= 1.
@@ -29,67 +48,16 @@ fn write_color(file: &mut File, color: Color) {
         .expect("Unable to write to file");
 }
 
-/// Check if a triangle has been hit by the ray.
-/// This code was provided by Wikipedia - 
-/// 'Möller–Trumbore intersection algorithm' and translated
-/// from C++ to  Rust by me.
-/// # Arguments
-/// * 't' - Triangle to check if ray has hit.
-/// * 'r' - Ray from the camera.
-fn hit_triangle(t: Triangle, r: Ray) -> f32{
-    let edge1 = t[1] - t[0];
-    let edge2 = t[2] - t[0];
-    let h = cross(r.direction(), edge2);
-    let a = dot(edge1, h);
-    const EPSILON: f32 = 0.0000001;
-    if a > -EPSILON && a < EPSILON {
-        return -1.0;
-    }
-
-    let f = 1.0 / a;
-    let s = r.origin() - t[0];
-    let u = f * dot(s, h);
-    if u < 0.0 || u > 1.0 {
-        return -1.0;
-    }
-
-    let q = cross(s, edge1);
-    let v = f * dot(r.direction(), q);
-    if v < 0.0 || u + v > 1.0 {
-        return -1.0;
-    }
-
-    let t = f * dot(edge2, q);
-    if t > EPSILON {
-        return t;
-    }
-    else {
-        return -1.0;
-    }
-}
-
 /// Calculate color based on the ray sent from the origin and returns the color.
 /// Currently linearly interpolating from pure white to light blue.
 /// # Arguments
 /// 'r' - Ray type, contains the origin and its direction
+/// 'w' - World, contains all the meshes
 fn ray_color(r: Ray, w: &World) -> Color {
-    // Test triangle
-    //let trig: Triangle = Triangle::new(
-    //    Point3::new(-1.0, -0.5, -1.0),
-    //    Point3::new(1.0, -0.5, -1.0),
-    //    Point3::new(0.0, 0.5, -1.0),
-    //    Vec3::new(0.0, 0.0, 1.0));
-    //let mut t = hit_triangle(trig, r);
-    //let mut trig: Triangle = Triangle::new_empty();
-    //let mut hit: Hit = Hit::new();
-    //hit = w.hit(r);
-    let hit = w.hit(r);
+    let hit: Hit = w.hit(r);
     if hit.t > 0.0 {
-        //let n = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
-
         let n = unit_vector(hit.triangle.normal());
         return Color::new(n.x()+1.0, n.y()+1.0, n.z()+1.0)*0.5;
-        //return Color::new(1.0, 1.0, 1.0);
     }
     let n = unit_vector(r.direction());
     let t = (n.y() + 1.0) * 0.5;
@@ -112,6 +80,11 @@ fn main() {
     /// Stores the height of our final image in pixels.
     const IMAGE_HEIGHT: u16 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as u16;
 
+    /// Enable/disable antialiasing.
+    const ANTIALIASING: bool = false;
+    /// How many times we sample for antialiasing.
+    const SAMPLES_PER_PIXEL: u16 = 500;
+
     // Camera properties
     let viewport_height: f32 = 2.0;
     let viewport_width: f32 = ASPECT_RATIO * viewport_height;
@@ -133,60 +106,47 @@ fn main() {
     output_file.write(format!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT).as_bytes())
         .expect("Unable to initiate output.ppm properties");
 
+    let mut cube: Mesh = Mesh::new_cube();
+    cube.rotate(Vec3::new(0.0, 30.0, 0.0));
+    cube.translate(Vec3::new(0.0, -0.5, -4.0));
 
-    // Create a simple plane
-    let trig1: Triangle = Triangle::new(
-        Point3::new(0.5, -0.5, 0.0),
-        Point3::new(0.5, 0.5, 0.0),
-        Point3::new(-0.5, 0.5, 0.0),
-        Vec3::new(0.0, 0.0, 1.0));
-    let trig2: Triangle = Triangle::new(
-        Point3::new(-0.5, -0.5, 0.0),
-        Point3::new(0.5, -0.5, 0.0),
-        Point3::new(-0.5, 0.5, 0.0),
-        Vec3::new(0.0, 0.0, 1.0));
-
-    let mut cube: Mesh = Mesh::new_mesh(vec![trig1, trig2]);
-    let mut cube2: Mesh = cube.clone();
-    cube.rotate(Vec3::new(0.0, 35.0, 0.0));
-    cube.translate(Vec3::new(0.0, 0.0, -1.0));
-
-    cube2.rotate(Vec3::new(0.0, -25.0, 0.0));
-    cube2.translate(Vec3::new(-0.5, 0.0, -1.0));
-
-    let trig3: Triangle = Triangle::new(
-        Point3::new(1000.0, -50.0, 500.0),
-        Point3::new(1000.0, -50.0, -500.0),
-        Point3::new(-1000.0, -50.0, 500.0),
-        Vec3::new(0.0, 1.0, 0.0));
-    let trig4: Triangle = Triangle::new(
-        Point3::new(-1000.0, -50.0, -500.0),
-        Point3::new(1000.0, -50.0, -500.0),
-        Point3::new(-1000.0, -50.0, 500.0),
-        Vec3::new(0.0, 1.0, 0.0));
-
-    let floor: Mesh = Mesh::new_mesh(vec![trig3, trig4]);
+    let mut plane: Mesh = Mesh::new_plane();
+    plane.scale(20.0);
+    plane.translate(Vec3::new(0.0, -1.5, -4.0));
 
     let mut world: World = World::new();
 
-    world.add(floor);
+    world.add(plane);
     world.add(cube);
-    world.add(cube2);
 
     // Loop over every single pixel in our image
     for y in 0..IMAGE_HEIGHT {
+        println!("Scanlines remaining: {}", IMAGE_HEIGHT-y);
         for x in 0..IMAGE_WIDTH {
-            // Color each pixel light blue
-            //let color: Color = Color::new(0.56, 0.64, 0.96);
+            if ANTIALIASING {
+                let mut color = Vec3::new(0.0, 0.0, 0.0);
+                for sample in 0..SAMPLES_PER_PIXEL {
+                    let mut rng = rand::thread_rng();
+                    let u: f32 = ((x) as f32 + rng.gen::<f32>()) / (IMAGE_WIDTH - 1) as f32;
+                    let v: f32 = 1.0 - ((y as f32 + rng.gen::<f32>()) / (IMAGE_HEIGHT - 1) as f32);
 
-            let u: f32 = x as f32 / (IMAGE_WIDTH - 1) as f32;
-            let v: f32 = 1.0 - (y as f32 / (IMAGE_HEIGHT - 1) as f32);
+                    let r = Ray::new(origin, lower_left_corner + (horizontal*u) + (vertical*v) - origin);
+                    color = color + ray_color(r, &world);
 
-            let r = Ray::new(origin, lower_left_corner + (horizontal*u) + (vertical*v) - origin);
-            let color = ray_color(r, &world);
+                }
+                // Write our r,g,b values to every single pixel
+                write_color_aa(&mut output_file, color, SAMPLES_PER_PIXEL);
+            } else {
+                    let u: f32 = ((x) as f32) / (IMAGE_WIDTH - 1) as f32;
+                    let v: f32 = 1.0 - ((y as f32) / (IMAGE_HEIGHT - 1) as f32);
 
-            // Write our r,g,b values to every single pixel
-            write_color(&mut output_file, color);
+                    let r = Ray::new(origin, lower_left_corner + (horizontal*u) + (vertical*v) - origin);
+                    let color = ray_color(r, &world);
+
+                    // Write our r,g,b values to every single pixel
+                    write_color(&mut output_file, color);
+
+            }
         }
     }
 }

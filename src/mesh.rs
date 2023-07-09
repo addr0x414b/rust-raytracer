@@ -18,6 +18,119 @@ impl Mesh {
         Mesh { triangles: trigs }
     }
 
+    pub fn new_plane() -> Mesh {
+        // Bot triangles
+        let t1: Triangle = Triangle::new(
+            Point3::new(-1.0, 0.0, 1.0),
+            Point3::new(1.0, 0.0, 1.0),
+            Point3::new(1.0, 0.0, -1.0),
+            Vec3::new(0.0, 1.0, 0.0)
+        );
+        let t2: Triangle = Triangle::new(
+            Point3::new(-1.0, 0.0, 1.0),
+            Point3::new(-1.0, 0.0, -1.0),
+            Point3::new(1.0, 0.0, -1.0),
+            Vec3::new(0.0, 1.0, 0.0)
+        );
+
+        let plane: Mesh = Mesh::new_mesh(vec![
+            t1,t2
+            ]);
+        return plane;
+    }
+
+    /// Create a default cube
+    pub fn new_cube() -> Mesh {
+        // Front triangles
+        let t1: Triangle = Triangle::new(
+            Point3::new(-1.0, -1.0, 1.0),
+            Point3::new(1.0, -1.0, 1.0),
+            Point3::new(1.0, 1.0, 1.0),
+            Vec3::new(0.0, 0.0, 1.0)
+        );
+        let t2: Triangle = Triangle::new(
+            Point3::new(-1.0, -1.0, 1.0),
+            Point3::new(-1.0, 1.0, 1.0),
+            Point3::new(1.0, 1.0, 1.0),
+            Vec3::new(0.0, 0.0, 1.0)
+        );
+
+        // Right triangles
+        let t3: Triangle = Triangle::new(
+            Point3::new(1.0, -1.0, 1.0),
+            Point3::new(1.0, -1.0, -1.0),
+            Point3::new(1.0, 1.0, -1.0),
+            Vec3::new(1.0, 0.0, 0.0)
+        );
+        let t4: Triangle = Triangle::new(
+            Point3::new(1.0, -1.0, 1.0),
+            Point3::new(1.0, 1.0, 1.0),
+            Point3::new(1.0, 1.0, -1.0),
+            Vec3::new(1.0, 0.0, 0.0)
+        );
+
+        // Left triangles
+        let t5: Triangle = Triangle::new(
+            Point3::new(-1.0, -1.0, -1.0),
+            Point3::new(-1.0, -1.0, 1.0),
+            Point3::new(-1.0, 1.0, 1.0),
+            Vec3::new(-1.0, 0.0, 0.0)
+        );
+        let t6: Triangle = Triangle::new(
+            Point3::new(-1.0, -1.0, -1.0),
+            Point3::new(-1.0, 1.0, -1.0),
+            Point3::new(-1.0, 1.0, 1.0),
+            Vec3::new(-1.0, 0.0, 0.0)
+        );
+
+        // Back triangles
+        let t7: Triangle = Triangle::new(
+            Point3::new(-1.0, -1.0, -1.0),
+            Point3::new(1.0, -1.0, -1.0),
+            Point3::new(1.0, 1.0, -1.0),
+            Vec3::new(0.0, 0.0, -1.0)
+        );
+        let t8: Triangle = Triangle::new(
+            Point3::new(-1.0, -1.0, -1.0),
+            Point3::new(-1.0, 1.0, -1.0),
+            Point3::new(1.0, 1.0, -1.0),
+            Vec3::new(0.0, 0.0, -1.0)
+        );
+
+        // Top triangles
+        let t9: Triangle = Triangle::new(
+            Point3::new(-1.0, 1.0, 1.0),
+            Point3::new(1.0, 1.0, 1.0),
+            Point3::new(1.0, 1.0, -1.0),
+            Vec3::new(0.0, 1.0, 0.0)
+        );
+        let t10: Triangle = Triangle::new(
+            Point3::new(-1.0, 1.0, 1.0),
+            Point3::new(-1.0, 1.0, -1.0),
+            Point3::new(1.0, 1.0, -1.0),
+            Vec3::new(0.0, 1.0, 0.0)
+        );
+
+        // Bot triangles
+        let t11: Triangle = Triangle::new(
+            Point3::new(-1.0, -1.0, 1.0),
+            Point3::new(1.0, -1.0, 1.0),
+            Point3::new(1.0, -1.0, -1.0),
+            Vec3::new(0.0, -1.0, 0.0)
+        );
+        let t12: Triangle = Triangle::new(
+            Point3::new(-1.0, -1.0, 1.0),
+            Point3::new(-1.0, -1.0, -1.0),
+            Point3::new(1.0, -1.0, -1.0),
+            Vec3::new(0.0, -1.0, 0.0)
+        );
+
+        let cube: Mesh = Mesh::new_mesh(vec![
+            t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12
+            ]);
+        return cube;
+    }
+
     /// Check if a ray has hit any triangle in our mesh.
     pub fn hit(&self, r: Ray) -> Hit {
 
