@@ -3,7 +3,7 @@ use rand::Rng;
 
 mod vec3;
 use hit::Hit;
-use vec3::{cross, unit_vector};
+use vec3::{cross, unit_vector, random_in_unit_sphere};
 
 use crate::{vec3::{Vec3, Color, Point3, dot}, ray::Ray, mesh::Mesh, world::World};
 
@@ -20,9 +20,9 @@ mod hit;
 /// * 'file' - Output PPM file, should already be initialized.
 /// * 'color' - Color struct which contains x,y,z (rgb). 0 <= R,G,B <= 1.
 fn write_color_aa(file: &mut File, color: Color, sample: u16) {
-    let r: u16 = ((color.x() * (1.0 / sample as f32)).clamp(0.0, 0.999) * 255.0) as u16;
-    let g: u16 = ((color.y() * (1.0 / sample as f32)).clamp(0.0, 0.999) * 255.0) as u16;
-    let b: u16 = ((color.z() * (1.0 / sample as f32)).clamp(0.0, 0.999) * 255.0) as u16;
+    let r: u16 = ((color.x() * (1.0 / sample as f32)).sqrt().clamp(0.0, 0.999) * 255.0) as u16;
+    let g: u16 = ((color.y() * (1.0 / sample as f32)).sqrt().clamp(0.0, 0.999) * 255.0) as u16;
+    let b: u16 = ((color.z() * (1.0 / sample as f32)).sqrt().clamp(0.0, 0.999) * 255.0) as u16;
     //let r: u16 = (color.x() * 255.0) as u16;
     //let g: u16 = (color.y() * 255.0) as u16;
     //let b: u16 = (color.z() * 255.0) as u16;
@@ -53,12 +53,22 @@ fn write_color(file: &mut File, color: Color) {
 /// # Arguments
 /// 'r' - Ray type, contains the origin and its direction
 /// 'w' - World, contains all the meshes
-fn ray_color(r: Ray, w: &World) -> Color {
+fn ray_color(r: Ray, w: &World, depth: u16) -> Color {
+    if depth <= 0 {
+        return Color::new(0.0, 0.0, 0.0);
+    }
     let hit: Hit = w.hit(r);
     if hit.t > 0.0 {
-        let n = unit_vector(hit.triangle.normal());
-        return Color::new(n.x()+1.0, n.y()+1.0, n.z()+1.0)*0.5;
+        let target = hit.at + hit.triangle.normal + random_in_unit_sphere();
+        //let target = unit_vector(hit.triangle.normal);
+        //let target = hit.triangle.normal();
+        return ray_color(Ray::new(hit.at, target - hit.at), w, depth-1) * 0.5;
     }
+    //if hit.t > 0.0 {
+    //    let n = unit_vector(hit.triangle.normal());
+    //    return Color::new(n.x()+1.0, n.y()+1.0, n.z()+1.0)*0.5;
+   //}
+    // This code generates the blueish gradient background.
     let n = unit_vector(r.direction());
     let t = (n.y() + 1.0) * 0.5;
     return (Color::new(1.0, 1.0, 1.0) * (1.0 - t)) + Color::new(0.5, 0.7, 1.0)*t;
@@ -74,16 +84,18 @@ fn main() {
     /// PPM output image width
     /// # Description
     /// Stores the width of our final image in pixels.
-    const IMAGE_WIDTH: u16 = 400;
+    const IMAGE_WIDTH: u16 = 1280;
     /// PPM output image height
     /// # Description
     /// Stores the height of our final image in pixels.
     const IMAGE_HEIGHT: u16 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as u16;
 
     /// Enable/disable antialiasing.
-    const ANTIALIASING: bool = false;
+    const ANTIALIASING: bool = true;
     /// How many times we sample for antialiasing.
-    const SAMPLES_PER_PIXEL: u16 = 500;
+    const SAMPLES_PER_PIXEL: u16 = 5;
+
+    const MAX_DEPTH: u16 = 50;
 
     // Camera properties
     let viewport_height: f32 = 2.0;
@@ -112,11 +124,18 @@ fn main() {
 
     let mut plane: Mesh = Mesh::new_plane();
     plane.scale(20.0);
-    plane.translate(Vec3::new(0.0, -1.5, -4.0));
+    plane.rotate(Vec3::new(0.0, 0.0, 0.0));
+    plane.translate(Vec3::new(0.0, -2.0, -4.0));
 
     let mut world: World = World::new();
 
+    let mut plane2: Mesh = Mesh::new_plane();
+    //plane2.scale(20.0);
+    plane2.rotate(Vec3::new(45.0, 0.0, 0.0));
+    plane2.translate(Vec3::new(0.0, 0.0, -4.0));
+
     world.add(plane);
+    //world.add(plane2);
     world.add(cube);
 
     // Loop over every single pixel in our image
@@ -130,8 +149,8 @@ fn main() {
                     let u: f32 = ((x) as f32 + rng.gen::<f32>()) / (IMAGE_WIDTH - 1) as f32;
                     let v: f32 = 1.0 - ((y as f32 + rng.gen::<f32>()) / (IMAGE_HEIGHT - 1) as f32);
 
-                    let r = Ray::new(origin, lower_left_corner + (horizontal*u) + (vertical*v) - origin);
-                    color = color + ray_color(r, &world);
+                    let r = Ray::new(origin, unit_vector(lower_left_corner + (horizontal*u) + (vertical*v) - origin));
+                    color = color + ray_color(r, &world, MAX_DEPTH);
 
                 }
                 // Write our r,g,b values to every single pixel
@@ -140,8 +159,8 @@ fn main() {
                     let u: f32 = ((x) as f32) / (IMAGE_WIDTH - 1) as f32;
                     let v: f32 = 1.0 - ((y as f32) / (IMAGE_HEIGHT - 1) as f32);
 
-                    let r = Ray::new(origin, lower_left_corner + (horizontal*u) + (vertical*v) - origin);
-                    let color = ray_color(r, &world);
+                    let r = Ray::new(origin, unit_vector(lower_left_corner + (horizontal*u) + (vertical*v) - origin));
+                    let color = ray_color(r, &world, MAX_DEPTH);
 
                     // Write our r,g,b values to every single pixel
                     write_color(&mut output_file, color);

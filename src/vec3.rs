@@ -1,5 +1,7 @@
 use std::ops::{Mul, Add, Div, Sub, Neg, Index};
 
+use rand::Rng;
+
 /// A struct that stores an array of three f32's. This struct is used for 
 /// vector 3's, points in 3d space, as well as RGB color values.
 #[derive(Copy, Clone)]
@@ -125,6 +127,31 @@ pub fn cross(a: Vec3, b: Vec3) -> Vec3 {
         a[2] * b[0] - a[0] * b[2],
         a[0] * b[1] - a[1] * b[0]
     );
+}
+
+/// Generate a completely random vector
+pub fn random_vec() -> Vec3 {
+    let mut rng = rand::thread_rng();
+    return Vec3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>());
+}
+
+/// Generate a completely random vector with values in between min and max.
+pub fn random_vec_range(min: f32, max: f32) -> Vec3 {
+    let mut rng = rand::thread_rng();
+    return Vec3::new(rng.gen_range(min..max), rng.gen_range(min..max), rng.gen_range(min..max));
+}
+
+pub fn random_in_unit_sphere() -> Vec3 {
+    loop {
+        let p = random_vec_range(-1.0, 1.0);
+        if p.length_squared() <= 1.0 {
+            return p;
+        }
+   }
+
+   //let mut p = random_vec_range(-1.0, 1.0);
+   //p = unit_vector(p);
+   //return p;
 }
 
 pub type Color = Vec3;

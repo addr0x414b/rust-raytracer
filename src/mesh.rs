@@ -1,4 +1,4 @@
-use crate::{triangle::Triangle, ray::Ray, hit::Hit, vec3::{Vec3, Point3}};
+use crate::{triangle::Triangle, ray::Ray, hit::Hit, vec3::{Vec3, Point3, unit_vector}};
 
 /// A mesh that is rendered in the world.
 /// Contains a vector of triangles to be drawn.
@@ -187,6 +187,7 @@ impl Mesh {
                 trig.normal.y() * theta_x.sin() + trig.normal.z() * theta_x.cos()
             );
 
+
             // Rotate on y.
             trig.normal = Vec3::new(
                 trig.normal.x() * theta_y.cos() + trig.normal.z() * theta_y.sin(),
@@ -200,6 +201,11 @@ impl Mesh {
                 trig.normal.x() * theta_z.sin() + trig.normal.y() * theta_z.cos(),
                 trig.normal.z()
             );
+            //println!("Before");
+            //trig.normal.print();
+            trig.normal = unit_vector(trig.normal);
+            //println!("After");
+            //trig.normal.print();
 
             // Now rotate the individual points
             for point in trig.points.iter_mut() {
