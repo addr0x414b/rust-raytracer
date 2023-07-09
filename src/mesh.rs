@@ -45,6 +45,19 @@ impl Mesh {
         }
     }
 
+    /// Scale a mesh based on a constant.
+    pub fn scale(&mut self, c: f32) {
+        for trig in self.triangles.iter_mut() {
+            for point in trig.points.iter_mut() {
+                *point = Point3::new(
+                    point.x() * c,
+                    point.y() * c,
+                    point.z() * c
+                );
+            }
+        }
+    }
+
     /// Rotate a mesh.
     pub fn rotate(&mut self, r: Vec3) {
         let theta_x = r.x().to_radians();
