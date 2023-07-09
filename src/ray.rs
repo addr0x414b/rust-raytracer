@@ -3,7 +3,7 @@ use crate::vec3::{Vec3, Point3};
 /// A struct that symbolizes a ray. It contains a 3D point as the origin,
 /// and a direction which is a vector.
 #[derive(Copy, Clone)]
-pub struct Ray{
+pub struct Ray {
     origin: Point3,
     direction: Vec3
 }

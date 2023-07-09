@@ -1,4 +1,4 @@
-use crate::{triangle::Triangle, ray::Ray};
+use crate::{triangle::Triangle, ray::Ray, hit::Hit};
 
 /// A mesh that is rendered in the world.
 /// Contains a vector of triangles to be drawn.
@@ -18,14 +18,17 @@ impl Mesh {
         Mesh { triangles: trigs }
     }
 
-    pub fn hit(&self, r: Ray, t: &mut Triangle) -> f32 {
+    pub fn hit(&self, r: Ray) -> Hit {
 
+        let mut closest_hit: Hit = Hit::new();
         for trig in self.triangles.iter() {
-            let t = trig.hit(r, t);
-            if t > 0.0 {
-                return t;
+            let hit: Hit = trig.hit(r);
+            if hit.t > 0.0 {
+                if hit.at.z() > closest_hit.at.z() {
+                    closest_hit = hit;
+                }
             }
         }
-        return -1.0;
+        return closest_hit;
     }
 }

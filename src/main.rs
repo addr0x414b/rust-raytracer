@@ -1,6 +1,7 @@
 use std::{fs::File, io::Write}; // Used to create/write to PPM file
 
 mod vec3;
+use hit::Hit;
 use vec3::{cross, unit_vector};
 
 use crate::{vec3::{Vec3, Color, Point3, dot}, ray::Ray, mesh::Mesh, world::World};
@@ -11,6 +12,7 @@ use crate::triangle::Triangle;
 
 mod mesh;
 mod world;
+mod hit;
 
 /// Write a color in PPM format to a PPM file
 /// # Arguments
@@ -78,17 +80,19 @@ fn ray_color(r: Ray, w: &World) -> Color {
     //    Point3::new(0.0, 0.5, -1.0),
     //    Vec3::new(0.0, 0.0, 1.0));
     //let mut t = hit_triangle(trig, r);
-    let mut trig: Triangle = Triangle::new_empty();
-    let mut t = w.hit(r, &mut trig);
-    if t > 0.0 {
+    //let mut trig: Triangle = Triangle::new_empty();
+    //let mut hit: Hit = Hit::new();
+    //hit = w.hit(r);
+    let hit = w.hit(r);
+    if hit.t > 0.0 {
         //let n = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
 
-        let n = unit_vector(trig.normal());
+        let n = unit_vector(hit.triangle.normal());
         return Color::new(n.x()+1.0, n.y()+1.0, n.z()+1.0)*0.5;
         //return Color::new(1.0, 1.0, 1.0);
     }
     let n = unit_vector(r.direction());
-    t = (n.y() + 1.0) * 0.5;
+    let t = (n.y() + 1.0) * 0.5;
     return (Color::new(1.0, 1.0, 1.0) * (1.0 - t)) + Color::new(0.5, 0.7, 1.0)*t;
 }
 

@@ -1,4 +1,4 @@
-use crate::{mesh::Mesh, ray::Ray, triangle::Triangle};
+use crate::{mesh::Mesh, ray::Ray, triangle::Triangle, hit::Hit};
 
 /// The world. Contains all the meshes in the scene.
 #[derive(Clone)]
@@ -19,14 +19,17 @@ impl World {
     }
 
     /// Iterate over all meshes and check if the ray has hit.
-    pub fn hit(&self, r: Ray, trig: &mut Triangle) -> f32 {
+    pub fn hit(&self, r: Ray) -> Hit {
 
+        let mut closest_hit: Hit = Hit::new();
         for mesh in self.meshes.iter() {
-            let t = mesh.hit(r, trig);
-            if t > 0.0 {
-                return t;
+            let hit: Hit = mesh.hit(r);
+            if hit.t > 0.0 {
+                if hit.at.z() > closest_hit.at.z() {
+                    closest_hit = hit;
+                }
             }
         }
-        return -1.0;
+        return closest_hit;
     }
 }

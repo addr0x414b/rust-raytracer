@@ -1,6 +1,6 @@
 use std::ops::Index;
 
-use crate::{vec3::{Point3, Vec3, cross, dot}, ray::Ray};
+use crate::{vec3::{Point3, Vec3, cross, dot}, ray::Ray, hit::Hit};
 
 /// A struct that contains information for a triangle. Has an array of 
 /// 3 poins, and a normal vector.
@@ -32,37 +32,48 @@ impl Triangle {
     }
 
     /// Check if the triangle has been hit by the ray.
-    pub fn hit(self, r: Ray, trig: &mut Triangle) -> f32 {
+    /// Return the hit struct which contains values about the triangle.
+    pub fn hit(self, r: Ray) -> Hit {
+        let mut hit: Hit = Hit::new();
+
         let edge1 = self.points[1] - self.points[0];
         let edge2 = self.points[2] - self.points[0];
         let h = cross(r.direction(), edge2);
         let a = dot(edge1, h);
         const EPSILON: f32 = 0.0000001;
         if a > -EPSILON && a < EPSILON {
-            return -1.0;
+            return hit;
         }
 
         let f = 1.0 / a;
         let s = r.origin() - self.points[0];
         let u = f * dot(s, h);
         if u < 0.0 || u > 1.0 {
-            return -1.0;
+            return hit;
         }
 
         let q = cross(s, edge1);
         let v = f * dot(r.direction(), q);
         if v < 0.0 || u + v > 1.0 {
-            return -1.0;
+            return hit;
         }
 
         let t = f * dot(edge2, q);
         if t > EPSILON {
+            let mut trig: Triangle = Triangle::new_empty();
             trig.points = self.points;
             trig.normal = self.normal();
-            return t;
+
+            hit.triangle = trig;
+            hit.t = t;
+
+            let at: Point3 = r.at(t);
+
+            hit.at = at;
+            return hit;
         }
         else {
-            return -1.0;
+            return hit;
         }
     }
 }
