@@ -136,17 +136,23 @@ fn main() {
 
     // Create a simple plane
     let trig1: Triangle = Triangle::new(
-        Point3::new(0.5, -0.5, -1.0),
-        Point3::new(0.5, 0.5, -1.0),
-        Point3::new(-0.5, 0.5, -1.0),
+        Point3::new(0.5, -0.5, 0.0),
+        Point3::new(0.5, 0.5, 0.0),
+        Point3::new(-0.5, 0.5, 0.0),
         Vec3::new(0.0, 0.0, 1.0));
     let trig2: Triangle = Triangle::new(
-        Point3::new(-0.5, -0.5, -1.0),
-        Point3::new(0.5, -0.5, -1.0),
-        Point3::new(-0.5, 0.5, -1.0),
+        Point3::new(-0.5, -0.5, 0.0),
+        Point3::new(0.5, -0.5, 0.0),
+        Point3::new(-0.5, 0.5, 0.0),
         Vec3::new(0.0, 0.0, 1.0));
 
-    let cube: Mesh = Mesh::new_mesh(vec![trig1, trig2]);
+    let mut cube: Mesh = Mesh::new_mesh(vec![trig1, trig2]);
+    let mut cube2: Mesh = cube.clone();
+    cube.rotate(Vec3::new(0.0, 35.0, 0.0));
+    cube.translate(Vec3::new(0.0, 0.0, -1.0));
+
+    cube2.rotate(Vec3::new(0.0, -25.0, 0.0));
+    cube2.translate(Vec3::new(-0.5, 0.0, -1.0));
 
     let trig3: Triangle = Triangle::new(
         Point3::new(1000.0, -50.0, 500.0),
@@ -165,6 +171,7 @@ fn main() {
 
     world.add(floor);
     world.add(cube);
+    world.add(cube2);
 
     // Loop over every single pixel in our image
     for y in 0..IMAGE_HEIGHT {

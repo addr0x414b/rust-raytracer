@@ -6,8 +6,8 @@ use crate::{vec3::{Point3, Vec3, cross, dot}, ray::Ray, hit::Hit};
 /// 3 poins, and a normal vector.
 #[derive(Copy, Clone)]
 pub struct Triangle {
-    points: [Point3; 3],
-    normal: Vec3,
+    pub points: [Point3; 3],
+    pub normal: Vec3,
 }
 
 impl Triangle {
@@ -29,6 +29,10 @@ impl Triangle {
     /// Get the triangles normal vector.
     pub fn normal(self) -> Vec3 {
         return self.normal;
+    }
+
+    pub fn set_normal(mut self, n: Vec3) {
+        self.normal = n;
     }
 
     /// Check if the triangle has been hit by the ray.
