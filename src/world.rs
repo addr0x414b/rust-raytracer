@@ -1,6 +1,6 @@
-use crate::{mesh::Mesh, ray::Ray, triangle::Triangle, hit::Hit};
+use crate::{mesh::Mesh, ray::Ray, hit::Hit};
 
-/// The world. Contains all the meshes in the scene.
+/// The world. Contains all the meshes in the scene
 #[derive(Clone)]
 pub struct World {
     meshes: Vec<Mesh>,
@@ -8,17 +8,17 @@ pub struct World {
 
 impl World {
 
-    /// Create a new empty world.
+    /// Create a new empty world
     pub fn new() -> World {
         World { meshes: Vec::new() }
     }
 
-    /// Add a mesh to the world.
+    /// Add a mesh to the world
     pub fn add(&mut self, mesh: Mesh) {
         self.meshes.push(mesh);
     }
 
-    /// Iterate over all meshes and check if the ray has hit.
+    /// Iterate over all meshes and check if the provided ray hits any object
     pub fn hit(&self, r: Ray) -> Hit {
 
         let mut closest_hit: Hit = Hit::new();
@@ -30,6 +30,6 @@ impl World {
                 }
             }
         }
-        return closest_hit;
+        return closest_hit; // Return the closest hit 
     }
 }

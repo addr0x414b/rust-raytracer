@@ -2,16 +2,17 @@ use std::ops::Index;
 
 use crate::{vec3::{Point3, Vec3, cross, dot}, ray::Ray, hit::Hit};
 
-/// A struct that contains information for a triangle. Has an array of 
-/// 3 poins, and a normal vector.
+/// A struct that contains information for a triangle
 #[derive(Copy, Clone)]
 pub struct Triangle {
+    /// The 3 points of a triangle
     pub points: [Point3; 3],
+    /// The triangle's normal vector
     pub normal: Vec3,
 }
 
 impl Triangle {
-    /// Create a new triangle.
+    /// Create a new triangle given 3 points and a normal
     pub fn new(a: Point3, b: Point3, c: Point3, n: Vec3) -> Triangle {
         Triangle { points: [a,b,c], normal: n }
     }
@@ -26,23 +27,19 @@ impl Triangle {
         );
     }
 
-    /// Get the triangles normal vector.
-    pub fn normal(self) -> Vec3 {
-        return self.normal;
-    }
-
-    pub fn set_normal(mut self, n: Vec3) {
-        self.normal = n;
-    }
-
     /// Check if the triangle has been hit by the ray.
     /// Return the hit struct which contains values about the triangle.
+    /// # Credit
+    /// * Using Möller–Trumbore intersection algorithm
+    /// * The code was provided by Wikipedia in C++, translated by me
+    /// * <https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm>
     pub fn hit(self, r: Ray) -> Hit {
-        let mut hit: Hit = Hit::new();
 
+        // Create an empty hit object. If the ray hits a triangle, this will get populated
+        let mut hit: Hit = Hit::new();
         let edge1 = self.points[1] - self.points[0];
         let edge2 = self.points[2] - self.points[0];
-        let h = cross(r.direction(), edge2);
+        let h = cross(r.direction, edge2);
         let a = dot(edge1, h);
         const EPSILON: f32 = 0.0000001;
         if a > -EPSILON && a < EPSILON {
@@ -50,31 +47,33 @@ impl Triangle {
         }
 
         let f = 1.0 / a;
-        let s = r.origin() - self.points[0];
+        let s = r.origin - self.points[0];
         let u = f * dot(s, h);
         if u < 0.0 || u > 1.0 {
             return hit;
         }
 
         let q = cross(s, edge1);
-        let v = f * dot(r.direction(), q);
+        let v = f * dot(r.direction, q);
         if v < 0.0 || u + v > 1.0 {
             return hit;
         }
 
         let t = f * dot(edge2, q);
+        // If t > EPSILON, that means our ray has hit the triangle
         if t > EPSILON {
+            // Create a new empty triangle. This will be used for our 'hit' struct
             let mut trig: Triangle = Triangle::new_empty();
             trig.points = self.points;
-            trig.normal = self.normal();
-
+            trig.normal = self.normal;
+            
+            // Populate our hit struct with the triangle, t value, and the 'at' position
+            // where the ray actually intersects the triangle
             hit.triangle = trig;
             hit.t = t;
-
             let at: Point3 = r.at(t);
-
             hit.at = at;
-            return hit;
+            return hit; // Return the hit struct
         }
         else {
             return hit;
@@ -82,7 +81,7 @@ impl Triangle {
     }
 }
 
-/// Get the point of a triangle based on the index. Iterate like an array.
+/// Get the point of a triangle based on the index. Iterate like an array
 impl Index<usize> for Triangle {
     type Output = Vec3;
 

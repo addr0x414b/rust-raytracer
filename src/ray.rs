@@ -1,29 +1,21 @@
 use crate::vec3::{Vec3, Point3};
 
-/// A struct that symbolizes a ray. It contains a 3D point as the origin,
-/// and a direction which is a vector.
+/// A struct that symbolizes a ray
 #[derive(Copy, Clone)]
 pub struct Ray {
-    origin: Point3,
-    direction: Vec3
+    /// The ray origin
+    pub origin: Point3,
+    /// The ray direction
+    pub direction: Vec3
 }
 
 impl Ray {
-    /// Generate new Ray.
+    /// Create new Ray
     pub fn new(origin: Point3, direction: Vec3) -> Ray {
         Ray {origin, direction}
     }
 
-    /// Get the ray origin.
-    pub fn origin(&self) -> Point3 {
-        return self.origin;
-    }
-
-    /// Get the ray direction.
-    pub fn direction(&self) -> Vec3 {
-        return self.direction;
-    }
-
+    /// Calculate the 3d coordinates of a position on the ray based on 't'
     pub fn at(&self, t: f32) -> Point3 {
         return self.origin + (self.direction*t);
     }

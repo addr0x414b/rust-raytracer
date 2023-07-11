@@ -3,51 +3,51 @@ use std::ops::{Mul, Add, Div, Sub, Neg, Index};
 use rand::Rng;
 
 /// A struct that stores an array of three f32's. This struct is used for 
-/// vector 3's, points in 3d space, as well as RGB color values.
+/// vector 3's, points in 3d space, as well as RGB color values
 #[derive(Copy, Clone)]
 pub struct Vec3 {
-    v: [f32; 3],
+    pub v: [f32; 3],
 }
 
 impl Vec3 {
-    /// Generate new Vec3 struct instance.
+    /// Generate new Vec3 struct
     pub fn new(x: f32, y: f32, z: f32) -> Vec3 {
         Vec3 {v: [x, y, z]}
     }
 
-    /// Get the first (x) value in our vector.
+    /// Get the first (x) value in the Vec3
     pub fn x(self) -> f32 {
         return self.v[0];
     }
 
-    /// Get the second (y) value in our vector.
+    /// Get the second (y) value in the Vec3
     pub fn y(self) -> f32 {
         return self.v[1];
     }
 
-    /// Get the third (z) value in our vector.
+    /// Get the third (z) value in the Vec3
     pub fn z(self) -> f32 {
         return self.v[2];
     }
 
-    /// Return the length of a vector.
+    /// Return the length of the vector
     pub fn length(self) -> f32 {
         return self.length_squared().sqrt();
     }
 
-    /// Add the squared of every component in vector.
+    /// Calculate the length squared of the vector
     pub fn length_squared(self) -> f32 {
         return (self.x()*self.x()) + (self.y()*self.y()) + (self.z()*self.z());
     }
 
-    /// Debugging function to print the vector values to console.
+    /// Debugging function to print the vector values to console
     pub fn print(self) {
         println!("{}, {}, {}", self.x(), self.y(), self.z());
     }
 }
 
 
-/// Get the component of the vector based on the index. Iterate like an array.
+/// Get the component of the vector based on the index. Iterate like an array
 impl Index<usize> for Vec3 {
     type Output = f32;
 
@@ -56,7 +56,7 @@ impl Index<usize> for Vec3 {
     }
 }
 
-/// Flip all the values sign in a vector.
+/// Flip all the values sign in a vector
 impl Neg for Vec3 {
     type Output = Vec3;
 
@@ -65,7 +65,7 @@ impl Neg for Vec3 {
     }
 }
 
-/// Add two Vec3 structs x,y,z values and return the sum.
+/// Add two Vec3 structs x,y,z values and return the sum
 impl Add<Vec3> for Vec3 {
     type Output = Vec3;
 
@@ -74,7 +74,7 @@ impl Add<Vec3> for Vec3 {
     }
 }
 
-/// Subtract two Vec3 structs x,y,z values.
+/// Subtract two Vec3 structs x,y,z values
 impl Sub<Vec3> for Vec3 {
     type Output = Vec3;
 
@@ -83,7 +83,7 @@ impl Sub<Vec3> for Vec3 {
     }
 }
 
-/// Multiply a Vec3 structs x,y,z values by a f32 float.
+/// Multiply a Vec3 structs x,y,z values by a f32 float
 impl Mul<f32> for Vec3 {
     type Output = Vec3;
 
@@ -92,7 +92,7 @@ impl Mul<f32> for Vec3 {
     }
 }
 
-/// Multiply two vectors and return result.
+/// Multiply two Vec3's and return result
 impl Mul<Vec3> for Vec3 {
     type Output = Vec3;
 
@@ -101,7 +101,7 @@ impl Mul<Vec3> for Vec3 {
     }
 }
 
-// Divide a Vec3 structs x,y,z values by a f32 float.
+/// Divide a Vec3 structs x,y,z values by a f32 float
 impl Div<f32> for Vec3 {
     type Output = Vec3;
 
@@ -110,17 +110,17 @@ impl Div<f32> for Vec3 {
     }
 }
 
-/// Calculate the unit vector.
+/// Calculate the unit (normal) vector of a Vec3
 pub fn unit_vector(v: Vec3) -> Vec3 {
     return v / v.length();
 }
 
-/// Calculate the dot product of two vectors.
+/// Calculate the dot product of two Vec3's
 pub fn dot(a: Vec3, b: Vec3) -> f32 {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-/// Calculate the cross product of two vectors.
+/// Calculate the cross product of two Vec3's
 pub fn cross(a: Vec3, b: Vec3) -> Vec3 {
     return Vec3::new(
         a[1] * b[2] - a[2] * b[1],
@@ -129,29 +129,23 @@ pub fn cross(a: Vec3, b: Vec3) -> Vec3 {
     );
 }
 
-/// Generate a completely random vector
+/// Generate a random vector
 pub fn random_vec() -> Vec3 {
     let mut rng = rand::thread_rng();
     return Vec3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>());
 }
 
-/// Generate a completely random vector with values in between min and max.
+/// Generate a random vector with values in between min and max
 pub fn random_vec_range(min: f32, max: f32) -> Vec3 {
     let mut rng = rand::thread_rng();
     return Vec3::new(rng.gen_range(min..max), rng.gen_range(min..max), rng.gen_range(min..max));
 }
 
+/// Generate a random Vec3 that's normalized. Used for random bounces
 pub fn random_in_unit_sphere() -> Vec3 {
-    loop {
-        let p = random_vec_range(-1.0, 1.0);
-        if p.length_squared() <= 1.0 {
-            return p;
-        }
-   }
-
-   //let mut p = random_vec_range(-1.0, 1.0);
-   //p = unit_vector(p);
-   //return p;
+   let mut p = random_vec_range(-1.0, 1.0);
+   p = unit_vector(p);
+   return p;
 }
 
 pub type Color = Vec3;

@@ -1,23 +1,24 @@
 use crate::{triangle::Triangle, ray::Ray, hit::Hit, vec3::{Vec3, Point3, unit_vector}};
 
-/// A mesh that is rendered in the world.
-/// Contains a vector of triangles to be drawn.
+/// A mesh that is rendered in the world
 #[derive(Clone)]
 pub struct Mesh {
+    /// A mesh consists of many triangles
     pub triangles: Vec<Triangle>,
 }
 
 impl Mesh {
-    /// Create a default empty mesh. Can add triangles to it later.
+    /// Create an empty mesh
     pub fn new() -> Mesh {
         Mesh { triangles: Vec::new() }
     }
 
-    /// Create a mesh with an already established Vec of triangles.
+    /// Create a mesh with an already established Vec of triangles
     pub fn new_mesh(trigs: Vec<Triangle>) -> Mesh {
         Mesh { triangles: trigs }
     }
 
+    /// Create a default plane mesh
     pub fn new_plane() -> Mesh {
         // Bot triangles
         let t1: Triangle = Triangle::new(
@@ -131,23 +132,33 @@ impl Mesh {
         return cube;
     }
 
-    /// Check if a ray has hit any triangle in our mesh.
+    /// Check if a ray has hit any triangle in our mesh
     pub fn hit(&self, r: Ray) -> Hit {
 
+        // We want to store the closest hit triangle so we only draw those
         let mut closest_hit: Hit = Hit::new();
+
+        // Loop through every triangle within 'us'
         for trig in self.triangles.iter() {
-            let hit: Hit = trig.hit(r);
+            let hit: Hit = trig.hit(r); // Check if the ray has hit any of our triangles
             if hit.t > 0.0 {
+                // Check if the hit triangle is closer than the current closest
                 if hit.at.z() > closest_hit.at.z() {
                     closest_hit = hit;
                 }
             }
         }
+        // Return the triangle that was hit that is also the closest
+        // Note: if we don't hit a triangle, the default z value of hit's 'at' is -5000000,
+        // so we won't draw anything
         return closest_hit;
     }
 
-    /// Translate a mesh.
+    /// Translate a mesh
+    /// # Arguments
+    /// * 'd' - The (x,y,z) of d translate in the x,y,z directions
     pub fn translate(&mut self, d: Vec3) {
+        // Loop over each triangle in the mesh and simply add x,y,z to the points to translate
         for trig in self.triangles.iter_mut() {
             for point in trig.points.iter_mut() {
                 *point = Point3::new(
@@ -158,7 +169,7 @@ impl Mesh {
         }
     }
 
-    /// Scale a mesh based on a constant.
+    /// Scale a mesh based on a constant
     pub fn scale(&mut self, c: f32) {
         for trig in self.triangles.iter_mut() {
             for point in trig.points.iter_mut() {
@@ -171,16 +182,19 @@ impl Mesh {
         }
     }
 
-    /// Rotate a mesh.
+    /// Rotate a mesh
+    /// # Arguments
+    /// * 'r' - Vec3 in degrees NOT radians
     pub fn rotate(&mut self, r: Vec3) {
+        // Must convert to radians
         let theta_x = r.x().to_radians();
         let theta_y = r.y().to_radians();
         let theta_z = r.z().to_radians();
 
+        // Need to rotate each triangle in the mesh
         for trig in self.triangles.iter_mut() {
-            // First rotate the normal vector on x, y, z.
-
-            // Rotate on x.
+            // First, let's rotate the normal 
+            // Rotate on x
             trig.normal = Vec3::new(
                 trig.normal.x(),
                 trig.normal.y() * theta_x.cos() - trig.normal.z() * theta_x.sin(),
@@ -188,24 +202,21 @@ impl Mesh {
             );
 
 
-            // Rotate on y.
+            // Rotate on y
             trig.normal = Vec3::new(
                 trig.normal.x() * theta_y.cos() + trig.normal.z() * theta_y.sin(),
                 trig.normal.y(),
                 -trig.normal.x() * theta_y.sin() + trig.normal.z() * theta_y.cos()
             );
 
-            // Rotate on z.
+            // Rotate on z
             trig.normal = Vec3::new(
                 trig.normal.x() * theta_z.cos() - trig.normal.y() * theta_z.sin(),
                 trig.normal.x() * theta_z.sin() + trig.normal.y() * theta_z.cos(),
                 trig.normal.z()
             );
-            //println!("Before");
-            //trig.normal.print();
+            // We MUST normalize the normal after rotating
             trig.normal = unit_vector(trig.normal);
-            //println!("After");
-            //trig.normal.print();
 
             // Now rotate the individual points
             for point in trig.points.iter_mut() {
