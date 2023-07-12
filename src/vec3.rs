@@ -44,6 +44,11 @@ impl Vec3 {
     pub fn print(self) {
         println!("{}, {}, {}", self.x(), self.y(), self.z());
     }
+
+    pub fn near_zero(self) -> bool {
+        let s = 1e-8;
+        return (self.x().abs() < s) && (self.y().abs() < s) && (self.z().abs() < s);
+    }
 }
 
 
@@ -146,6 +151,24 @@ pub fn random_in_unit_sphere() -> Vec3 {
    let mut p = random_vec_range(-1.0, 1.0);
    p = unit_vector(p);
    return p;
+}
+
+/// Generate a random unit vector
+pub fn random_unit_vector() -> Vec3 {
+    return unit_vector(random_in_unit_sphere());
+}
+
+/// Generate a random Vec3, using a normal vector. Hemispherical scattering
+pub fn random_in_hemisphere(normal: Vec3) -> Vec3 {
+    let in_unit_sphere = random_in_unit_sphere();
+    if dot(in_unit_sphere, normal) > 0.0 {
+        return in_unit_sphere;
+    }
+    return -in_unit_sphere;
+}
+
+pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+    return v - n * 2.0 * dot(v,n);
 }
 
 pub type Color = Vec3;

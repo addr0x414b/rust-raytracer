@@ -1,5 +1,7 @@
 // Things I didn't write
-use std::{fs::File, io::Write}; // Used to create/write to PPM file
+use std::{fs::File, io::Write};
+use material::Material;
+// Used to create/write to PPM file
 use rand::Rng; // Used to generate random numbers for sampling 
 
 // Things I wrote
@@ -9,12 +11,15 @@ mod triangle;
 mod mesh;
 mod world;
 mod hit;
+mod material;
 
 use hit::Hit;
-use vec3::{Vec3, Color, Point3, unit_vector, random_in_unit_sphere};
+use vec3::{Vec3, Color, Point3, unit_vector, random_in_hemisphere};
 use ray::Ray;
-use mesh::Mesh;
+use mesh::{Mesh, MaterialEnum};
 use world::World;
+
+use crate::material::{Diffuse, Metal};
 
 /// Determine which drawing mode we should use
 /// * 'Normals' - Draw only the normal colors of objects
@@ -30,6 +35,8 @@ enum DrawingMode {
 /// * 'w' - World reference, contains all the meshes
 /// * 'depth' - How many bounces a ray can take
 /// * 'mode' - The drawing mode
+/// # Return
+/// * Color based on the ray 
 fn ray_color(r: Ray, w: &World, depth: u16, mode: DrawingMode) -> Color {
     match mode {
         DrawingMode::Sampling => {
@@ -41,9 +48,26 @@ fn ray_color(r: Ray, w: &World, depth: u16, mode: DrawingMode) -> Color {
                 // Currently only diffuse. I.e. random bouncing
                 // Calculate a new random target based on where we hit the triangle
                 // Use the triangle's normal to make sure we bounce in the correct direction
-                let target = hit.at + hit.triangle.normal + random_in_unit_sphere();
+                //let target = hit.at + random_in_hemisphere(hit.triangle.normal);
                 // Recursively call until we've bounced our last bounce
-                return ray_color(Ray::new(hit.at, target - hit.at), w, depth-1, mode) * 0.5;
+                //return ray_color(Ray::new(hit.at, target - hit.at), w, depth-1, mode) * 0.5;
+                
+                let mut scattered: Ray = Ray::new(Vec3::new(0.0,0.0,0.0), Vec3::new(0.0,0.0,0.0));
+                let mut attenuation: Color = Color::new(0.0, 0.0, 0.0);
+                match hit.material {
+                    MaterialEnum::Diffuse(ref diffuse) => {
+                        if diffuse.scatter(r, hit.clone(), &mut attenuation, &mut scattered) {
+                            return attenuation * ray_color(scattered, w, depth-1, mode);
+                        }
+                        return Color::new(0.0,0.0,0.0);
+                    },
+                    MaterialEnum::Metal(ref metal) => {
+                        if metal.scatter(r, hit.clone(), &mut attenuation, &mut scattered) {
+                            return attenuation * ray_color(scattered, w, depth-1, mode);
+                        }
+                        return Color::new(0.0,0.0,0.0);
+                    }
+                }
             }
         },
         DrawingMode::Normals => {
@@ -106,7 +130,7 @@ fn main() {
     /// PPM output image width
     /// # Description
     /// * The width of our final image in pixels
-    const IMAGE_WIDTH: u16 = 400;
+    const IMAGE_WIDTH: u16 = 1920;
 
     /// PPM output image height
     /// # Description
@@ -122,7 +146,7 @@ fn main() {
     /// Pixel samples
     /// # Description
     /// * How many times we sample per pixel
-    const SAMPLES_PER_PIXEL: u16 = 5;
+    const SAMPLES_PER_PIXEL: u16 = 10;
 
     /// Ray bounces
     /// # Description
@@ -156,23 +180,29 @@ fn main() {
     let mut cube: Mesh = Mesh::new_cube();
     cube.rotate(Vec3::new(0.0, 30.0, 0.0));
     cube.translate(Vec3::new(0.0, -0.5, -4.0));
+    cube.material = MaterialEnum::Diffuse(Diffuse::new(Color::new(0.7, 0.3, 0.3)));
+
+    let mut cube2: Mesh = Mesh::new_cube();
+    cube2.translate(Vec3::new(3.0, -0.5, -3.0));
+    cube2.material = MaterialEnum::Metal(Metal::new(Color::new(0.8, 0.6, 0.2)));
+
+    let mut cube3: Mesh = Mesh::new_cube();
+    cube3.translate(Vec3::new(-3.0, -0.5, -3.0));
+    cube3.material = MaterialEnum::Metal(Metal::new(Color::new(0.8, 0.8, 0.8)));
 
     let mut plane: Mesh = Mesh::new_plane();
     plane.scale(20.0);
     plane.rotate(Vec3::new(0.0, 0.0, 0.0));
     plane.translate(Vec3::new(0.0, -2.0, -4.0));
+    plane.material = MaterialEnum::Diffuse(Diffuse::new(Color::new(0.8, 0.8, 0.0)));
 
     // The world stores all the meshes that we can draw
     let mut world: World = World::new();
 
-    let mut plane2: Mesh = Mesh::new_plane();
-    //plane2.scale(20.0);
-    plane2.rotate(Vec3::new(45.0, 0.0, 0.0));
-    plane2.translate(Vec3::new(0.0, 0.0, -4.0));
-
     world.add(plane);
-    //world.add(plane2);
     world.add(cube);
+    world.add(cube2);
+    world.add(cube3);
 
     // Loop over every single pixel in our image
     for y in 0..IMAGE_HEIGHT {

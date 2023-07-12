@@ -1,21 +1,29 @@
-use crate::{triangle::Triangle, ray::Ray, hit::Hit, vec3::{Vec3, Point3, unit_vector}};
+use crate::{triangle::Triangle, ray::Ray, hit::Hit, vec3::{Vec3, Point3, unit_vector, Color}, material::{Diffuse, Metal}};
+
+/// Material enum. Contains all the different possible materials for a mesh
+#[derive(Clone)]
+pub enum MaterialEnum {
+    Diffuse(Diffuse),
+    Metal(Metal)
+}
 
 /// A mesh that is rendered in the world
 #[derive(Clone)]
 pub struct Mesh {
     /// A mesh consists of many triangles
     pub triangles: Vec<Triangle>,
+    pub material: MaterialEnum,
 }
 
 impl Mesh {
     /// Create an empty mesh
     pub fn new() -> Mesh {
-        Mesh { triangles: Vec::new() }
+        Mesh { triangles: Vec::new(), material: MaterialEnum::Diffuse(Diffuse::new(Color::new(0.5, 0.5, 0.5))) }
     }
 
     /// Create a mesh with an already established Vec of triangles
     pub fn new_mesh(trigs: Vec<Triangle>) -> Mesh {
-        Mesh { triangles: trigs }
+        Mesh { triangles: trigs, material: MaterialEnum::Diffuse(Diffuse::new(Color::new(0.5, 0.5, 0.5))) }
     }
 
     /// Create a default plane mesh
@@ -140,7 +148,8 @@ impl Mesh {
 
         // Loop through every triangle within 'us'
         for trig in self.triangles.iter() {
-            let hit: Hit = trig.hit(r); // Check if the ray has hit any of our triangles
+            let mut hit: Hit = trig.hit(r); // Check if the ray has hit any of our triangles
+            hit.material = self.material.clone();
             if hit.t > 0.0 {
                 // Check if the hit triangle is closer than the current closest
                 if hit.at.z() > closest_hit.at.z() {
