@@ -35,23 +35,31 @@ impl Metal {
     }
 }
 
+/// Implementation for diffuse ray scattering
 impl Material for Diffuse {
     fn scatter(&self, r: Ray, hit: Hit, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+        // Calculate a random bounce off the object
         let mut scatter_direction = hit.triangle.normal + random_unit_vector();
         if scatter_direction.near_zero() {
+            // If we're close to zero, just set as the normal
             scatter_direction = hit.triangle.normal;
         }
+        // Set scattered to this new ray. This is the bounce we made, or the scattering ray
         *scattered = Ray::new(hit.at, scatter_direction);
         *attenuation = self.color;
-        return true;
+        return true; // Default return true
     }
 }
 
+/// Implementation for metal ray scattering
 impl Material for Metal {
     fn scatter(&self, r: Ray, hit: Hit, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+        // Find the direction of the ray based on a smooth reflection
         let reflected = reflect(unit_vector(r.direction), hit.triangle.normal);
+        // New ray bounce
         *scattered = Ray::new(hit.at, reflected);
         *attenuation = self.color;
+        // Only return true if the new ray is in the same general direction as the triangle normal
         return dot(scattered.direction, hit.triangle.normal) > 0.0;
     }
 }

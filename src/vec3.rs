@@ -45,6 +45,7 @@ impl Vec3 {
         println!("{}, {}, {}", self.x(), self.y(), self.z());
     }
 
+    /// Check if the parameters of a Vec3 are very close to 0
     pub fn near_zero(self) -> bool {
         let s = 1e-8;
         return (self.x().abs() < s) && (self.y().abs() < s) && (self.z().abs() < s);
@@ -167,6 +168,7 @@ pub fn random_in_hemisphere(normal: Vec3) -> Vec3 {
     return -in_unit_sphere;
 }
 
+/// Reflect a Vec3 based on a Vec3 and a normal Vec3. Gives a perfect bounce
 pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
     return v - n * 2.0 * dot(v,n);
 }

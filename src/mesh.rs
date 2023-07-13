@@ -12,6 +12,7 @@ pub enum MaterialEnum {
 pub struct Mesh {
     /// A mesh consists of many triangles
     pub triangles: Vec<Triangle>,
+    /// The mesh's material
     pub material: MaterialEnum,
 }
 

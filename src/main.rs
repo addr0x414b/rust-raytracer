@@ -14,7 +14,7 @@ mod hit;
 mod material;
 
 use hit::Hit;
-use vec3::{Vec3, Color, Point3, unit_vector, random_in_hemisphere};
+use vec3::{Vec3, Color, Point3, unit_vector};
 use ray::Ray;
 use mesh::{Mesh, MaterialEnum};
 use world::World;
@@ -39,26 +39,34 @@ enum DrawingMode {
 /// * Color based on the ray 
 fn ray_color(r: Ray, w: &World, depth: u16, mode: DrawingMode) -> Color {
     match mode {
+        // Check which drawing mode is enabled
         DrawingMode::Sampling => {
             if depth <= 0 { // If we've reached our last bounce, no more color to add
                 return Color::new(0.0, 0.0, 0.0);
             }
             let hit: Hit = w.hit(r); // Check if our ray has hit anything. T will be positive
             if hit.t > 0.0 {
-                // Currently only diffuse. I.e. random bouncing
-                // Calculate a new random target based on where we hit the triangle
-                // Use the triangle's normal to make sure we bounce in the correct direction
-                //let target = hit.at + random_in_hemisphere(hit.triangle.normal);
-                // Recursively call until we've bounced our last bounce
-                //return ray_color(Ray::new(hit.at, target - hit.at), w, depth-1, mode) * 0.5;
-                
+                // Scattered gives us the new ray based on the material of the object. For example,
+                // if we hit a perfectly smooth object, the ray bounce will be a perfect bounce away,
+                // so the ray will "scatter" perfectly. Whereas for diffuse, it's randomly scattered 
+                // due to the surface not being smooth
                 let mut scattered: Ray = Ray::new(Vec3::new(0.0,0.0,0.0), Vec3::new(0.0,0.0,0.0));
+                // When we hit an object, attenuation is set as the color of the object. We then
+                // multiply by the recursive bounce. This allows the color to take in account all the objects
+                // we bounce off, which is similar to what light does in real life. Light absorption
                 let mut attenuation: Color = Color::new(0.0, 0.0, 0.0);
+
+                // Check the material of the object we hit. I don't like repeating code, need to find a way
+                // to make this cleaner... but it works for now
                 match hit.material {
                     MaterialEnum::Diffuse(ref diffuse) => {
+                        // The scatter function returns a bool. We want to check if we've scattered properly
+                        // We set the values of attenuation and scattered in that function call
                         if diffuse.scatter(r, hit.clone(), &mut attenuation, &mut scattered) {
+                            // Recursively multiply the final color by all the bounces of objects
                             return attenuation * ray_color(scattered, w, depth-1, mode);
                         }
+                        // If we don't scatter, we just return black
                         return Color::new(0.0,0.0,0.0);
                     },
                     MaterialEnum::Metal(ref metal) => {
