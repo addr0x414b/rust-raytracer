@@ -9,12 +9,16 @@ pub struct Triangle {
     pub points: [Point3; 3],
     /// The triangle's normal vector
     pub normal: Vec3,
+    /// True if the triangle is smoothly shaded
+    pub smooth: bool,
+    /// Correctly populated if our triangle is smoothly shaded
+    pub normals: [Point3; 3],
 }
 
 impl Triangle {
-    /// Create a new triangle given 3 points and a normal
+    /// Create a new FLAT SHADED triangle given 3 points and a normal
     pub fn new(a: Point3, b: Point3, c: Point3, n: Vec3) -> Triangle {
-        Triangle { points: [a,b,c], normal: n }
+        Triangle { points: [a,b,c], normal: n, smooth: false, normals: [a,b,c] }
     }
 
     /// Create an empty triangle.
@@ -66,6 +70,11 @@ impl Triangle {
             let mut trig: Triangle = Triangle::new_empty();
             trig.points = self.points;
             trig.normal = self.normal;
+
+            if self.smooth {
+                trig.smooth = true;
+                trig.normals = [self.normals[0], self.normals[1], self.normals[2]];
+            }
             
             // Populate our hit struct with the triangle, t value, and the 'at' position
             // where the ray actually intersects the triangle

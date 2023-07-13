@@ -1,8 +1,7 @@
 // Things I didn't write
-use std::{fs::File, io::Write};
-use material::Material;
-// Used to create/write to PPM file
+use std::{fs::File, io::Write}; // Used to create/write to PPM file
 use rand::Rng; // Used to generate random numbers for sampling 
+use std::time::Instant; // Used to check run time
 
 // Things I wrote
 mod vec3;
@@ -14,12 +13,13 @@ mod hit;
 mod material;
 
 use hit::Hit;
-use vec3::{Vec3, Color, Point3, unit_vector};
+use vec3::{Vec3, Color, Point3, unit_vector, dot};
 use ray::Ray;
 use mesh::{Mesh, MaterialEnum};
 use world::World;
+use material::{Material, Diffuse, Metal};
 
-use crate::material::{Diffuse, Metal};
+use crate::triangle::Triangle;
 
 /// Determine which drawing mode we should use
 /// * 'Normals' - Draw only the normal colors of objects
@@ -81,7 +81,27 @@ fn ray_color(r: Ray, w: &World, depth: u16, mode: DrawingMode) -> Color {
         DrawingMode::Normals => {
             let hit: Hit = w.hit(r);
             if hit.t > 0.0 {
-                let n = hit.triangle.normal;
+                let n: Vec3;
+                if hit.triangle.smooth {
+                    let v0 = hit.triangle.points[1] - hit.triangle.points[0];
+                    let v1 = hit.triangle.points[2] - hit.triangle.points[0];
+                    let v2 = hit.at - hit.triangle.points[0];
+
+                    let d00 = dot(v0, v0);
+                    let d01 = dot(v0, v1);
+                    let d11 = dot(v1, v1);
+                    let d20 = dot(v2, v0);
+                    let d21 = dot(v2, v1);
+
+                    let denom = d00 * d11 - d01 * d01;
+
+                    let v = (d11 * d20 - d01 * d21) / denom;
+                    let w = (d00 * d21 - d01 * d20) / denom;
+                    let u = 1.0 - v - w;
+                    n = unit_vector(hit.triangle.normals[0] * u + hit.triangle.normals[1] * v + hit.triangle.normals[2] * w);
+                } else {
+                    n = hit.triangle.normal;
+                }
                 // Standard way of calculating color based on a normal vector
                 return Color::new(n.x()+1.0, n.y()+1.0, n.z()+1.0)*0.5;
             }
@@ -138,7 +158,7 @@ fn main() {
     /// PPM output image width
     /// # Description
     /// * The width of our final image in pixels
-    const IMAGE_WIDTH: u16 = 1920;
+    const IMAGE_WIDTH: u16 = 480;
 
     /// PPM output image height
     /// # Description
@@ -212,6 +232,7 @@ fn main() {
     world.add(cube2);
     world.add(cube3);
 
+    let start_time = Instant::now();
     // Loop over every single pixel in our image
     for y in 0..IMAGE_HEIGHT {
         println!("Scanlines remaining: {}", IMAGE_HEIGHT-y);
@@ -248,5 +269,14 @@ fn main() {
                 }
             }
         }
+    }
+    let elapsed_time = start_time.elapsed();
+
+    if elapsed_time.as_secs() >= 60 {
+        let minutes = elapsed_time.as_secs() / 60;
+        let seconds = elapsed_time.as_secs() % 60;
+        println!("Elapsed time: {} minutes {} seconds", minutes, seconds);
+    } else {
+        println!("Elapsed time: {:.2?}", elapsed_time);
     }
 }

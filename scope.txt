@@ -3,7 +3,8 @@ A raytracer written in the Rust programming language.
 Features:
 [X] - Generate an image to a file
 [X] - Spawn and move around various objects
-[_] - Modify object properties to change the material look in the final image
+[X] - Modify object properties to change the material look in the final image
+[_] - Smooth and flat shading
 [_] - Import custom models
 [_] - Custom textures for custom models (at least diffuse, extra points for normals and others)
 [_] - Add, edit, and move around light sources

@@ -1,4 +1,4 @@
-use crate::{ray::Ray, hit::Hit, vec3::{Color, random_unit_vector, reflect, unit_vector, dot, random_in_unit_sphere}};
+use crate::{ray::Ray, hit::Hit, vec3::{Color, random_unit_vector, reflect, unit_vector, dot, random_in_unit_sphere, Vec3}};
 
 /// A material trait that we use for all materials
 pub trait Material {
@@ -39,8 +39,29 @@ impl Metal {
 /// Implementation for diffuse ray scattering
 impl Material for Diffuse {
     fn scatter(&self, r: Ray, hit: Hit, attenuation: &mut Color, scattered: &mut Ray) -> bool {
-        // Calculate a random bounce off the object
-        let mut scatter_direction = hit.triangle.normal + random_unit_vector();
+        let mut scatter_direction: Vec3;
+
+        if hit.triangle.smooth {
+            let v0 = hit.triangle.points[1] - hit.triangle.points[0];
+            let v1 = hit.triangle.points[2] - hit.triangle.points[0];
+            let v2 = hit.at - hit.triangle.points[0];
+
+            let d00 = dot(v0, v0);
+            let d01 = dot(v0, v1);
+            let d11 = dot(v1, v1);
+            let d20 = dot(v2, v0);
+            let d21 = dot(v2, v1);
+
+            let denom = d00 * d11 - d01 * d01;
+
+            let v = (d11 * d20 - d01 * d21) / denom;
+            let w = (d00 * d21 - d01 * d20) / denom;
+            let u = 1.0 - v - w;
+            scatter_direction = unit_vector(hit.triangle.normals[0] * u + hit.triangle.normals[1] * v + hit.triangle.normals[2] * w) + random_unit_vector();
+        } else {
+            scatter_direction = hit.triangle.normal + random_unit_vector();
+        }
+
         if scatter_direction.near_zero() {
             // If we're close to zero, just set as the normal
             scatter_direction = hit.triangle.normal;
@@ -55,8 +76,32 @@ impl Material for Diffuse {
 /// Implementation for metal ray scattering
 impl Material for Metal {
     fn scatter(&self, r: Ray, hit: Hit, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+        let reflected: Vec3;
+
+        if hit.triangle.smooth {
+            let v0 = hit.triangle.points[1] - hit.triangle.points[0];
+            let v1 = hit.triangle.points[2] - hit.triangle.points[0];
+            let v2 = hit.at - hit.triangle.points[0];
+
+            let d00 = dot(v0, v0);
+            let d01 = dot(v0, v1);
+            let d11 = dot(v1, v1);
+            let d20 = dot(v2, v0);
+            let d21 = dot(v2, v1);
+
+            let denom = d00 * d11 - d01 * d01;
+
+            let v = (d11 * d20 - d01 * d21) / denom;
+            let w = (d00 * d21 - d01 * d20) / denom;
+            let u = 1.0 - v - w;
+            reflected = reflect(unit_vector(r.direction), unit_vector(hit.triangle.normals[0] * u + hit.triangle.normals[1] * v + hit.triangle.normals[2] * w));
+        } else {
+            reflected = reflect(unit_vector(r.direction), hit.triangle.normal);
+        }
+
+
         // Find the direction of the ray based on a smooth reflection
-        let reflected = reflect(unit_vector(r.direction), hit.triangle.normal);
+        //let reflected = reflect(unit_vector(r.direction), hit.triangle.normal);
         // New ray bounce. Use the smoothness value to determine how 'fuzzy' the metal material is
         *scattered = Ray::new(hit.at, reflected + random_in_unit_sphere() * self.smoothness);
         *attenuation = self.color;
