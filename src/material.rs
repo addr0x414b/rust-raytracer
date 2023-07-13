@@ -1,4 +1,4 @@
-use crate::{ray::Ray, hit::Hit, vec3::{Color, random_unit_vector, reflect, unit_vector, dot}};
+use crate::{ray::Ray, hit::Hit, vec3::{Color, random_unit_vector, reflect, unit_vector, dot, random_in_unit_sphere}};
 
 /// A material trait that we use for all materials
 pub trait Material {
@@ -27,11 +27,12 @@ impl Diffuse {
 #[derive(Copy, Clone)]
 pub struct Metal {
     pub color: Color,
+    pub smoothness: f32
 }
 
 impl Metal {
-    pub fn new(color: Color) -> Metal {
-        Metal {color }
+    pub fn new(color: Color, smoothness: f32) -> Metal {
+        Metal {color, smoothness }
     }
 }
 
@@ -56,8 +57,8 @@ impl Material for Metal {
     fn scatter(&self, r: Ray, hit: Hit, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         // Find the direction of the ray based on a smooth reflection
         let reflected = reflect(unit_vector(r.direction), hit.triangle.normal);
-        // New ray bounce
-        *scattered = Ray::new(hit.at, reflected);
+        // New ray bounce. Use the smoothness value to determine how 'fuzzy' the metal material is
+        *scattered = Ray::new(hit.at, reflected + random_in_unit_sphere() * self.smoothness);
         *attenuation = self.color;
         // Only return true if the new ray is in the same general direction as the triangle normal
         return dot(scattered.direction, hit.triangle.normal) > 0.0;

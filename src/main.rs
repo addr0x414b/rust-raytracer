@@ -154,12 +154,12 @@ fn main() {
     /// Pixel samples
     /// # Description
     /// * How many times we sample per pixel
-    const SAMPLES_PER_PIXEL: u16 = 10;
+    const SAMPLES_PER_PIXEL: u16 = 5;
 
     /// Ray bounces
     /// # Description
     /// How many times a ray bounces
-    const MAX_DEPTH: u16 = 50;
+    const MAX_DEPTH: u16 = 10;
 
     // Camera properties
     let viewport_height: f32 = 2.0;
@@ -192,11 +192,11 @@ fn main() {
 
     let mut cube2: Mesh = Mesh::new_cube();
     cube2.translate(Vec3::new(3.0, -0.5, -3.0));
-    cube2.material = MaterialEnum::Metal(Metal::new(Color::new(0.8, 0.6, 0.2)));
+    cube2.material = MaterialEnum::Metal(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
 
     let mut cube3: Mesh = Mesh::new_cube();
     cube3.translate(Vec3::new(-3.0, -0.5, -3.0));
-    cube3.material = MaterialEnum::Metal(Metal::new(Color::new(0.8, 0.8, 0.8)));
+    cube3.material = MaterialEnum::Metal(Metal::new(Color::new(0.8, 0.8, 0.8), 0.4));
 
     let mut plane: Mesh = Mesh::new_plane();
     plane.scale(20.0);
