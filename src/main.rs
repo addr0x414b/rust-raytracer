@@ -13,13 +13,11 @@ mod hit;
 mod material;
 
 use hit::Hit;
-use vec3::{Vec3, Color, Point3, unit_vector, dot};
+use vec3::{Vec3, Color, Point3, unit_vector, barycentric};
 use ray::Ray;
 use mesh::{Mesh, MaterialEnum};
 use world::World;
 use material::{Material, Diffuse, Metal};
-
-use crate::triangle::Triangle;
 
 /// Determine which drawing mode we should use
 /// * 'Normals' - Draw only the normal colors of objects
@@ -82,24 +80,14 @@ fn ray_color(r: Ray, w: &World, depth: u16, mode: DrawingMode) -> Color {
             let hit: Hit = w.hit(r);
             if hit.t > 0.0 {
                 let n: Vec3;
+                // If the triangle we hit is smoothly shaded, i.e. normals for each vertex
                 if hit.triangle.smooth {
-                    let v0 = hit.triangle.points[1] - hit.triangle.points[0];
-                    let v1 = hit.triangle.points[2] - hit.triangle.points[0];
-                    let v2 = hit.at - hit.triangle.points[0];
-
-                    let d00 = dot(v0, v0);
-                    let d01 = dot(v0, v1);
-                    let d11 = dot(v1, v1);
-                    let d20 = dot(v2, v0);
-                    let d21 = dot(v2, v1);
-
-                    let denom = d00 * d11 - d01 * d01;
-
-                    let v = (d11 * d20 - d01 * d21) / denom;
-                    let w = (d00 * d21 - d01 * d20) / denom;
-                    let u = 1.0 - v - w;
-                    n = unit_vector(hit.triangle.normals[0] * u + hit.triangle.normals[1] * v + hit.triangle.normals[2] * w);
+                    // Calculate the barycentric coordinates based on the hit and the triangle's normals
+                    let bary = barycentric(hit.clone());
+                    // Calculate the interpolated normal
+                    n = unit_vector(hit.triangle.normals[0] * bary[0] + hit.triangle.normals[1] * bary[1] + hit.triangle.normals[2] * bary[2]);
                 } else {
+                    // Triangle is flat shaded, use its normal
                     n = hit.triangle.normal;
                 }
                 // Standard way of calculating color based on a normal vector
@@ -174,7 +162,7 @@ fn main() {
     /// Pixel samples
     /// # Description
     /// * How many times we sample per pixel
-    const SAMPLES_PER_PIXEL: u16 = 5;
+    const SAMPLES_PER_PIXEL: u16 = 2;
 
     /// Ray bounces
     /// # Description
@@ -232,6 +220,7 @@ fn main() {
     world.add(cube2);
     world.add(cube3);
 
+    // Track how long an image takes to render
     let start_time = Instant::now();
     // Loop over every single pixel in our image
     for y in 0..IMAGE_HEIGHT {

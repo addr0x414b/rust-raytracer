@@ -7,11 +7,12 @@ use crate::{vec3::{Point3, Vec3, cross, dot}, ray::Ray, hit::Hit};
 pub struct Triangle {
     /// The 3 points of a triangle
     pub points: [Point3; 3],
-    /// The triangle's normal vector
+    /// The triangle's normal vector. Only use if 'smooth' is set to false
     pub normal: Vec3,
     /// True if the triangle is smoothly shaded
     pub smooth: bool,
-    /// Correctly populated if our triangle is smoothly shaded
+    /// Correctly populated if our triangle is smoothly shaded. In other words,
+    /// only use if the 'smooth' value is set to true
     pub normals: [Point3; 3],
 }
 
@@ -31,8 +32,8 @@ impl Triangle {
         );
     }
 
-    /// Check if the triangle has been hit by the ray.
-    /// Return the hit struct which contains values about the triangle.
+    /// Check if the triangle has been hit by the ray
+    /// Return the hit struct which contains values about the triangle
     /// # Credit
     /// * Using Möller–Trumbore intersection algorithm
     /// * The code was provided by Wikipedia in C++, translated by me

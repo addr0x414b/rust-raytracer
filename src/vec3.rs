@@ -2,6 +2,8 @@ use std::ops::{Mul, Add, Div, Sub, Neg, Index};
 
 use rand::Rng;
 
+use crate::hit::Hit;
+
 /// A struct that stores an array of three f32's. This struct is used for 
 /// vector 3's, points in 3d space, as well as RGB color values
 #[derive(Copy, Clone)]
@@ -171,6 +173,28 @@ pub fn random_in_hemisphere(normal: Vec3) -> Vec3 {
 /// Reflect a Vec3 based on a Vec3 and a normal Vec3. Gives a perfect bounce
 pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
     return v - n * 2.0 * dot(v,n);
+}
+
+/// Calculate the barycentric coordinates based on the triangle we hit
+pub fn barycentric(hit: Hit) -> Vec3 {
+    let v0 = hit.triangle.points[1] - hit.triangle.points[0];
+    let v1 = hit.triangle.points[2] - hit.triangle.points[0];
+    let v2 = hit.at - hit.triangle.points[0];
+
+    let d00 = dot(v0, v0);
+    let d01 = dot(v0, v1);
+    let d11 = dot(v1, v1);
+    let d20 = dot(v2, v0);
+    let d21 = dot(v2, v1);
+
+    let denom = d00 * d11 - d01 * d01;
+
+    let v = (d11 * d20 - d01 * d21) / denom;
+    let w = (d00 * d21 - d01 * d20) / denom;
+    let u = 1.0 - v - w;
+
+    // Return the u,v,w in a Vec3 to grab 
+    return Vec3::new(u, v, w);
 }
 
 pub type Color = Vec3;
