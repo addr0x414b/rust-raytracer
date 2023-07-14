@@ -1,4 +1,6 @@
-use crate::{triangle::Triangle, ray::Ray, hit::Hit, vec3::{Vec3, Point3, unit_vector, Color}, material::{Diffuse, Metal}};
+use std::{fs::File, io::{BufReader, BufRead}};
+
+use crate::{triangle::{Triangle, self}, ray::Ray, hit::Hit, vec3::{Vec3, Point3, unit_vector, Color}, material::{Diffuse, Metal}};
 
 /// Material enum. Contains all the different possible materials for a mesh
 #[derive(Clone)]
@@ -254,4 +256,67 @@ impl Mesh {
         }
 
     }
+}
+
+/// Load an OBJ mesh given a file path
+pub fn load_mesh(path: &str, smooth: bool) -> Mesh {
+    let file = File::open(path).expect("Failed to open file");
+    let reader = BufReader::new(file);
+
+    let mut vertices: Vec<[f32; 3]> = Vec::new();
+    let mut normals: Vec<[f32; 3]> = Vec::new();
+    let mut triangles: Vec<Triangle> = Vec::new();
+
+    for line in reader.lines() {
+        let line = line.expect("Failed to read line");
+        let words: Vec<&str> = line.split_whitespace().collect();
+
+
+        if words[0] == "v" {
+            vertices.push([
+                words[1].parse().unwrap(),
+                words[2].parse().unwrap(),
+                words[3].parse().unwrap()
+            ]);
+        } else if words[0] == "vn" {
+            normals.push([
+                words[1].parse().unwrap(),
+                words[2].parse().unwrap(),
+                words[3].parse().unwrap()
+            ]);
+        } else if words[0] == "f" {
+            let v1: Vec<&str> = words[1].split('/').collect();
+            let v2: Vec<&str> = words[2].split('/').collect();
+            let v3: Vec<&str> = words[3].split('/').collect();
+
+            let p1: usize = v1[0].parse().unwrap();
+            let n1: usize = v1[2].parse().unwrap();
+
+            let p2: usize = v2[0].parse().unwrap();
+            let n2: usize = v2[2].parse().unwrap();
+
+            let p3: usize = v3[0].parse().unwrap();
+            let n3: usize = v3[2].parse().unwrap();
+
+            let mut trig = Triangle::new(
+                Point3::new(vertices[p1-1][0], vertices[p1-1][1], vertices[p1-1][2],),
+                Point3::new(vertices[p2-1][0], vertices[p2-1][1], vertices[p2-1][2],),
+                Point3::new(vertices[p3-1][0], vertices[p3-1][1], vertices[p3-1][2],),
+                Vec3::new(normals[n1-1][0], normals[n1-1][1], normals[n1-1][2],),
+            );
+
+            if smooth {
+                trig.smooth = true;
+
+                trig.normals = [
+                    unit_vector(Vec3::new(normals[n1-1][0], normals[n1-1][1], normals[n1-1][2])),
+                    unit_vector(Vec3::new(normals[n2-1][0], normals[n2-1][1], normals[n2-1][2])),
+                    unit_vector(Vec3::new(normals[n3-1][0], normals[n3-1][1], normals[n3-1][2])),
+                ];
+            }
+
+            triangles.push(trig);
+        }
+    }
+    return Mesh::new_mesh(triangles);
 }

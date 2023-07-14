@@ -19,6 +19,8 @@ use mesh::{Mesh, MaterialEnum};
 use world::World;
 use material::{Material, Diffuse, Metal};
 
+use crate::mesh::load_mesh;
+
 /// Determine which drawing mode we should use
 /// * 'Normals' - Draw only the normal colors of objects
 /// * 'Sampling' - Draw with sampling enabled
@@ -146,7 +148,7 @@ fn main() {
     /// PPM output image width
     /// # Description
     /// * The width of our final image in pixels
-    const IMAGE_WIDTH: u16 = 480;
+    const IMAGE_WIDTH: u16 = 500;
 
     /// PPM output image height
     /// # Description
@@ -162,12 +164,12 @@ fn main() {
     /// Pixel samples
     /// # Description
     /// * How many times we sample per pixel
-    const SAMPLES_PER_PIXEL: u16 = 2;
+    const SAMPLES_PER_PIXEL: u16 = 5;
 
     /// Ray bounces
     /// # Description
     /// How many times a ray bounces
-    const MAX_DEPTH: u16 = 10;
+    const MAX_DEPTH: u16 = 50;
 
     // Camera properties
     let viewport_height: f32 = 2.0;
@@ -193,7 +195,7 @@ fn main() {
         .expect("Unable to initiate output.ppm properties");
 
     // Just create some default objects to play around with
-    let mut cube: Mesh = Mesh::new_cube();
+    /*let mut cube: Mesh = Mesh::new_cube();
     cube.rotate(Vec3::new(0.0, 30.0, 0.0));
     cube.translate(Vec3::new(0.0, -0.5, -4.0));
     cube.material = MaterialEnum::Diffuse(Diffuse::new(Color::new(0.7, 0.3, 0.3)));
@@ -218,7 +220,29 @@ fn main() {
     world.add(plane);
     world.add(cube);
     world.add(cube2);
-    world.add(cube3);
+    world.add(cube3);*/
+
+    let mut cube = load_mesh("models/sphere.obj", false);
+    cube.translate(Vec3::new(0.0, -0.5, -2.0));
+    //cube.rotate(Vec3::new(0.0, 30.0, 0.0));
+    //cube.translate(Vec3::new(0.0, -0.5, -4.0));
+    cube.material = MaterialEnum::Metal(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
+
+    //let mut cube: Mesh = Mesh::new_cube();
+    //cube.rotate(Vec3::new(0.0, 30.0, 0.0));
+    //cube.translate(Vec3::new(0.0, -0.5, -4.0));
+    //cube.material = MaterialEnum::Diffuse(Diffuse::new(Color::new(0.7, 0.3, 0.3)));
+    //cube.material = MaterialEnum::Metal(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
+
+    let mut plane: Mesh = Mesh::new_plane();
+    plane.scale(20.0);
+    plane.rotate(Vec3::new(0.0, 0.0, 0.0));
+    plane.translate(Vec3::new(0.0, -2.0, -4.0));
+    plane.material = MaterialEnum::Diffuse(Diffuse::new(Color::new(0.8, 0.8, 0.0)));
+
+    let mut world: World = World::new();
+    world.add(cube);
+    world.add(plane);
 
     // Track how long an image takes to render
     let start_time = Instant::now();
@@ -268,4 +292,5 @@ fn main() {
     } else {
         println!("Elapsed time: {:.2?}", elapsed_time);
     }
+
 }
