@@ -38,7 +38,7 @@ impl Triangle {
     /// * Using Möller–Trumbore intersection algorithm
     /// * The code was provided by Wikipedia in C++, translated by me
     /// * <https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm>
-    pub fn hit(self, r: Ray) -> Hit {
+    pub fn hit(&self, r: Ray) -> Hit {
 
         // Create an empty hit object. If the ray hits a triangle, this will get populated
         let mut hit: Hit = Hit::new();
@@ -71,6 +71,7 @@ impl Triangle {
             let mut trig: Triangle = Triangle::new_empty();
             trig.points = self.points;
             trig.normal = self.normal;
+
 
             if self.smooth {
                 trig.smooth = true;

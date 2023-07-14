@@ -65,7 +65,7 @@ impl Material for Diffuse {
 /// Implementation for metal ray scattering
 impl Material for Metal {
     fn scatter(&self, r: Ray, hit: Hit, attenuation: &mut Color, scattered: &mut Ray) -> bool {
-        let reflected: Vec3;
+        let mut reflected: Vec3;
 
         if hit.triangle.smooth {
             let bary = barycentric(hit.clone());
@@ -75,12 +75,22 @@ impl Material for Metal {
         }
 
 
+        let bary = barycentric(hit.clone());
+        let interp = unit_vector(hit.triangle.normals[0] * bary[0] + hit.triangle.normals[1] * bary[1] + hit.triangle.normals[2] * bary[2]);
+
         // Find the direction of the ray based on a smooth reflection
         //let reflected = reflect(unit_vector(r.direction), hit.triangle.normal);
         // New ray bounce. Use the smoothness value to determine how 'fuzzy' the metal material is
-        *scattered = Ray::new(hit.at, reflected + random_in_unit_sphere() * self.smoothness);
+        //*scattered = Ray::new(hit.at, unit_vector(reflected + random_in_unit_sphere() * self.smoothness));
+        *scattered = Ray::new(hit.at, reflected);
         *attenuation = self.color;
+        //scattered.direction.print();
+        //hit.triangle.normals[0].print();
         // Only return true if the new ray is in the same general direction as the triangle normal
+        //return dot(scattered.direction, hit.triangle.normals[0]) > 0.0 || dot(scattered.direction, hit.triangle.normals[1]) > 0.0 || dot(scattered.direction, hit.triangle.normals[2]) > 0.0;
+        //return true;
+        //return dot(scattered.direction, hit.triangle.normals[0]) > 0.0;
         return dot(scattered.direction, hit.triangle.normal) > 0.0;
+        //return dot(scattered.direction, unit_vector(hit.triangle.normals[0] * bary[0] + hit.triangle.normals[1] * bary[1] + hit.triangle.normals[2] * bary[2])) > 0.0;
     }
 }

@@ -151,9 +151,14 @@ pub fn random_vec_range(min: f32, max: f32) -> Vec3 {
 
 /// Generate a random Vec3 that's normalized. Used for random bounces
 pub fn random_in_unit_sphere() -> Vec3 {
-   let mut p = random_vec_range(-1.0, 1.0);
-   p = unit_vector(p);
-   return p;
+    loop {
+        let p = random_vec_range(-1.0, 1.0);
+        if p.length_squared() >= 1.0 {
+            continue;
+        }
+        return p;
+
+    }
 }
 
 /// Generate a random unit vector

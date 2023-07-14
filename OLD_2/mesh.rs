@@ -212,7 +212,25 @@ impl Mesh {
                 trig.normal.y() * theta_x.cos() - trig.normal.z() * theta_x.sin(),
                 trig.normal.y() * theta_x.sin() + trig.normal.z() * theta_x.cos()
             );
-
+            trig.normals[0] = Vec3::new(
+                trig.normals[0].x(),
+                trig.normals[0].y() * theta_x.cos() - trig.normals[0].z() * theta_x.sin(),
+                trig.normals[0].y() * theta_x.sin() + trig.normals[0].z() * theta_x.cos()
+            );
+            trig.normals[1] = Vec3::new(
+                trig.normals[1].x(),
+                trig.normals[1].y() * theta_x.cos() - trig.normals[1].z() * theta_x.sin(),
+                trig.normals[1].y() * theta_x.sin() + trig.normals[1].z() * theta_x.cos()
+            );
+            trig.normals[2] = Vec3::new(
+                trig.normals[2].x(),
+                trig.normals[2].y() * theta_x.cos() - trig.normals[2].z() * theta_x.sin(),
+                trig.normals[2].y() * theta_x.sin() + trig.normals[2].z() * theta_x.cos()
+            );
+            trig.normal = unit_vector(trig.normal);
+            trig.normals[0] = unit_vector(trig.normals[0]);
+            trig.normals[1] = unit_vector(trig.normals[1]);
+            trig.normals[2] = unit_vector(trig.normals[2]);
 
             // Rotate on y
             trig.normal = Vec3::new(
@@ -220,6 +238,25 @@ impl Mesh {
                 trig.normal.y(),
                 -trig.normal.x() * theta_y.sin() + trig.normal.z() * theta_y.cos()
             );
+            trig.normals[0] = Vec3::new(
+                trig.normals[0].x() * theta_y.cos() + trig.normals[0].z() * theta_y.sin(),
+                trig.normals[0].y(),
+                -trig.normals[0].x() * theta_y.sin() + trig.normals[0].z() * theta_y.cos()
+            );
+            trig.normals[1] = Vec3::new(
+                trig.normals[1].x() * theta_y.cos() + trig.normals[1].z() * theta_y.sin(),
+                trig.normals[1].y(),
+                -trig.normals[1].x() * theta_y.sin() + trig.normals[1].z() * theta_y.cos()
+            );
+            trig.normals[2] = Vec3::new(
+                trig.normals[2].x() * theta_y.cos() + trig.normals[2].z() * theta_y.sin(),
+                trig.normals[2].y(),
+                -trig.normals[2].x() * theta_y.sin() + trig.normals[2].z() * theta_y.cos()
+            );
+            trig.normal = unit_vector(trig.normal);
+            trig.normals[0] = unit_vector(trig.normals[0]);
+            trig.normals[1] = unit_vector(trig.normals[1]);
+            trig.normals[2] = unit_vector(trig.normals[2]);
 
             // Rotate on z
             trig.normal = Vec3::new(
@@ -227,8 +264,27 @@ impl Mesh {
                 trig.normal.x() * theta_z.sin() + trig.normal.y() * theta_z.cos(),
                 trig.normal.z()
             );
+            trig.normals[0] = Vec3::new(
+                trig.normals[0].x() * theta_z.cos() - trig.normals[0].y() * theta_z.sin(),
+                trig.normals[0].x() * theta_z.sin() + trig.normals[0].y() * theta_z.cos(),
+                trig.normals[0].z()
+            );
+            trig.normals[1] = Vec3::new(
+                trig.normals[1].x() * theta_z.cos() - trig.normals[1].y() * theta_z.sin(),
+                trig.normals[1].x() * theta_z.sin() + trig.normals[1].y() * theta_z.cos(),
+                trig.normals[1].z()
+            );
+            trig.normals[2] = Vec3::new(
+                trig.normals[2].x() * theta_z.cos() - trig.normals[2].y() * theta_z.sin(),
+                trig.normals[2].x() * theta_z.sin() + trig.normals[2].y() * theta_z.cos(),
+                trig.normals[2].z()
+            );
+
             // We MUST normalize the normal after rotating
             trig.normal = unit_vector(trig.normal);
+            trig.normals[0] = unit_vector(trig.normals[0]);
+            trig.normals[1] = unit_vector(trig.normals[1]);
+            trig.normals[2] = unit_vector(trig.normals[2]);
 
             // Now rotate the individual points
             for point in trig.points.iter_mut() {
@@ -302,16 +358,16 @@ pub fn load_mesh(path: &str, smooth: bool) -> Mesh {
                 Point3::new(vertices[p1-1][0], vertices[p1-1][1], vertices[p1-1][2],),
                 Point3::new(vertices[p2-1][0], vertices[p2-1][1], vertices[p2-1][2],),
                 Point3::new(vertices[p3-1][0], vertices[p3-1][1], vertices[p3-1][2],),
-                Vec3::new(normals[n1-1][0], normals[n1-1][1], normals[n1-1][2],),
+                Vec3::new(normals[n1-1][0], normals[n1-1][1], normals[n1-1][2]),
             );
 
             if smooth {
                 trig.smooth = true;
 
                 trig.normals = [
-                    unit_vector(Vec3::new(normals[n1-1][0], normals[n1-1][1], normals[n1-1][2])),
-                    unit_vector(Vec3::new(normals[n2-1][0], normals[n2-1][1], normals[n2-1][2])),
-                    unit_vector(Vec3::new(normals[n3-1][0], normals[n3-1][1], normals[n3-1][2])),
+                    Vec3::new(normals[n1-1][0], normals[n1-1][1], normals[n1-1][2]),
+                    Vec3::new(normals[n2-1][0], normals[n2-1][1], normals[n2-1][2]),
+                    Vec3::new(normals[n3-1][0], normals[n3-1][1], normals[n3-1][2]),
                 ];
             }
 
