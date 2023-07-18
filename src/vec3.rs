@@ -1,9 +1,8 @@
 use std::ops::{Div, Sub, Add, Mul};
-
 use rand::Rng;
-
 use crate::hit::Hit;
 
+/// Vec3 struct.
 #[derive(Copy, Clone, Debug)]
 pub struct Vec3 {
     pub x: f64,
@@ -12,10 +11,15 @@ pub struct Vec3 {
 }
 
 impl Vec3 {
+
+    /// Create a new Vec3
+    /// # Arguments
+    /// 'x,y,z' - Positions
     pub fn new(x: f64, y: f64, z: f64) -> Vec3 {
         return Vec3 { x, y, z};
     }
-        /// Return the length of the vector
+
+    /// Return the length of the vector
     pub fn length(self) -> f64 {
         return self.length_squared().sqrt();
     }
@@ -25,13 +29,14 @@ impl Vec3 {
         return (self.x*self.x) + (self.y*self.y) + (self.z*self.z);
     }
 
-        /// Check if the parameters of a Vec3 are very close to 0
+    /// Check if the parameters of a Vec3 are very close to 0
     pub fn near_zero(self) -> bool {
         let s = 1e-8;
         return (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s);
     }
 }
 
+/// Allow the Vec3 to be divided by a double
 impl Div<f64> for Vec3 {
     type Output = Vec3;
 
@@ -44,6 +49,7 @@ impl Div<f64> for Vec3 {
     }
 }
 
+/// Allow the Vec3 to be subtracted by another Vec3
 impl Sub<Vec3> for Vec3 {
     type Output = Vec3;
 
@@ -56,6 +62,7 @@ impl Sub<Vec3> for Vec3 {
     }
 }
 
+/// Allow the Vec3 to be multiplied by a double
 impl Mul<f64> for Vec3 {
     type Output = Vec3;
 
@@ -64,6 +71,7 @@ impl Mul<f64> for Vec3 {
     }
 }
 
+/// Allow the Vec3 to be subtracted by another Vec3
 impl Add<Vec3> for Vec3 {
     type Output = Vec3;
 
@@ -76,6 +84,11 @@ impl Add<Vec3> for Vec3 {
     }
 }
 
+/// Calculate the cross product of two Vec3's
+/// # Arguments
+/// * 'a, b' - Two Vec3's 
+/// # Returns
+/// * The Vec3 result of the cross product
 pub fn cross(a: Vec3, b: Vec3) -> Vec3 {
     return Vec3 {
         x: a.y * b.z - a.z * b.y,
@@ -84,14 +97,29 @@ pub fn cross(a: Vec3, b: Vec3) -> Vec3 {
     };
 }
 
+/// Calculate the dot product of two Vec3's
+/// # Arguments
+/// * 'a, b' - Two Vec3's 
+/// # Returns
+/// * The double result of the dot product
 pub fn dot(a: Vec3, b: Vec3) -> f64 {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
+/// Calculate the unit vector of a Vec3
+/// # Arguments
+/// * 'v' - The vector
+/// # Returns
+/// * The unit vector result
 pub fn unit_vector(v: Vec3) -> Vec3 {
     return v / v.length();
 }
 
+/// Calculate the barycentric coordinates
+/// # Arguments
+/// * 'hit' - Hit struct which contains information of the triangle that was hit
+/// # Returns
+/// * The u,w,v barycentric results in the Vec3's x,y,z positions
 pub fn barycentric(hit: Hit) -> Vec3 {
     let v0 = hit.triangle.points[1] - hit.triangle.points[0];
     let v1 = hit.triangle.points[2] - hit.triangle.points[0];
@@ -113,7 +141,7 @@ pub fn barycentric(hit: Hit) -> Vec3 {
     return Vec3::new(u, v, w);
 }
 
-/// Multiply two Vec3's and return result
+/// Allow the Vec3 to be multiplied by another Vec3
 impl Mul<Vec3> for Vec3 {
     type Output = Vec3;
 
@@ -122,11 +150,17 @@ impl Mul<Vec3> for Vec3 {
     }
 }
 
+/// Calculate a random Vec3 given a range
+/// # Arguments
+/// * 'min, max' - Minimum and maximum values for the Vec3
+/// # Returns
+/// * A random Vec3
 pub fn random_vec_range(min: f64, max: f64) -> Vec3 {
     let mut rng = rand::thread_rng();
     return Vec3::new(rng.gen_range(min..max), rng.gen_range(min..max), rng.gen_range(min..max));
 }
 
+/// Calculate a random vector in a unit sphere
 pub fn random_in_unit_sphere() -> Vec3 {
     loop {
         let p = random_vec_range(-1.0, 1.0);
@@ -144,6 +178,11 @@ pub fn random_unit_vector() -> Vec3 {
 }
 
 /// Reflect a Vec3 based on a Vec3 and a normal Vec3. Gives a perfect bounce
+/// # Arguments
+/// * 'v' - The incoming vector
+/// * 'n' - The vector of the object we're hitting for the reflection
+/// # Returns
+/// * A new reflected vector
 pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
     return v - n * 2.0 * dot(v,n);
 }
